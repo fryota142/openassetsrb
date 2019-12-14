@@ -1,10 +1,13 @@
-# openassets-ruby [![Build Status](https://travis-ci.org/haw/openassets-ruby.svg?branch=master)](https://travis-ci.org/haw/openassets-ruby) [![Gem Version](https://badge.fury.io/rb/openassets-ruby.svg)](https://badge.fury.io/rb/openassets-ruby) [![MIT License](http://img.shields.io/badge/license-MIT-blue.svg?style=flat)](LICENSE)
+# openassetsrb [![Build Status](https://travis-ci.org/chaintope/openassetsrb.svg?branch=master)](https://travis-ci.org/chaintope/openassetsrb) [![Gem Version](https://badge.fury.io/rb/openassetsrb.svg)](https://badge.fury.io/rb/openassetsrb) [![MIT License](http://img.shields.io/badge/license-MIT-blue.svg?style=flat)](LICENSE)
 The implementation of the [Open Assets Protocol](https://github.com/OpenAssets/open-assets-protocol) for Ruby.
+
+This library is a fork of [openassets-ruby](https://github.com/haw/openassets-ruby). 
+The dependency library is changed from `bitcoin-ruby` to `bitcoinrb`.
 
 ## Install
 
 ```rubyThe implementation of the bitcoin protocol for ruby.
-gem install openassets-ruby
+gem install openassets
 ```
 
 ## Configuration
@@ -151,7 +154,7 @@ To use the Bitcoin Core multi-wallet support ([version 0.15 onwards](https://git
 
 ## API
 
-Currently openassets-ruby support the following API.
+Currently openassetsrb support the following API.
 
 * **list_unspent**
 Returns an array of unspent transaction outputs, argument with the asset ID and quantity of each output.
@@ -399,7 +402,7 @@ This API is to burn the asset by spending the all UTXO of specified asset as Bit
 
 ## Command line interface
 
-Openassets-ruby comes with a `openassets` command line interface that allows easy interaction with OpenAssets.
+Openassetsrb comes with a `openassets` command line interface that allows easy interaction with OpenAssets.
 
 ### Usage
 
@@ -417,4 +420,4 @@ Openassets-ruby comes with a `openassets` command line interface that allows eas
 
 ## License
 
-openassets-ruby is licensed under the [MIT License](LICENSE).
+openassetsrb is licensed under the [MIT License](LICENSE).
