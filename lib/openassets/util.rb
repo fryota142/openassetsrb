@@ -16,12 +16,12 @@ module OpenAssets
     # @return [String] The Open Assets Address.
     def address_to_oa_address(btc_address)
       begin
-        btc_hex = decode_base58(btc_address)
+        btc_hex = Bitcoin::Base58.decode(btc_address)
         btc_hex = '0' +btc_hex if btc_hex.size==47
         address = btc_hex[0..-9] # bitcoin address without checksum
         named_addr = OA_NAMESPACE.to_s(16) + address
-        oa_checksum = checksum(named_addr)
-        encode_base58(named_addr + oa_checksum)
+        oa_checksum = Bitcoin.calc_checksum(named_addr)
+        Bitcoin::Base58.encode(named_addr + oa_checksum)
       rescue ArgumentError
         nil # bech32 format fails to decode. TODO define OA address for segwit
       end
@@ -31,10 +31,10 @@ module OpenAssets
     # @param [String] oa_address The Open Assets Address.
     # @return [String] The Bitcoin address.
     def oa_address_to_address(oa_address)
-      decode_address = decode_base58(oa_address)
+      decode_address = Bitcoin::Base58.decode(oa_address)
       btc_addr = decode_address[2..-9]
-      btc_checksum = checksum(btc_addr)
-      encode_base58(btc_addr + btc_checksum)
+      btc_checksum = Bitcoin.calc_checksum(btc_addr)
+      Bitcoin::Base58.encode(btc_addr + btc_checksum)
     end
 
     # generate asset ID from public key.
@@ -55,7 +55,7 @@ module OpenAssets
 
     def hash_to_asset_id(hash)
       hash = oa_version_byte.to_s(16) + hash # add version byte to script hash
-      encode_base58(hash + checksum(hash)) # add checksum & encode
+      Bitcoin::Base58.encode(hash + Bitcoin.calc_checksum(hash)) # add checksum & encode
     end
 
     # LEB128 encode
@@ -95,28 +95,20 @@ module OpenAssets
       BigDecimal(coin) * BigDecimal(100000000)
     end
 
-    # Get address from script.
-    # @param [Bitcoin::Script] script The output script.
-    # @return [String] The Bitcoin address. if the script dose not contains address, return nil.
-    def script_to_address(script)
-      script.is_multisig? ? script.get_multisig_addresses : script.get_addresses.first
-    end
-
     # validate bitcoin address
     def validate_address(addresses)
       addresses.each{|a|
-        raise ArgumentError, "#{a} is invalid bitcoin address. " unless valid_address?(a)
+        raise ArgumentError, "#{a} is invalid bitcoin address. " unless Bitcoin.valid_address?(a)
       }
     end
 
     # validate asset ID
     def valid_asset_id?(asset_id)
       return false if asset_id.nil? || asset_id.length != 34
-      decoded = decode_base58(asset_id)
+      decoded = Bitcoin::Base58.decode(asset_id)
       return false if  decoded[0,2].to_i(16) != oa_version_byte
       p2pkh_script_hash = decoded[2..-9]
-      address = hash160_to_address(p2pkh_script_hash)
-      valid_address?(address)
+      p2pkh_script_hash.htb.bytesize == 20
     end
 
     # read variable integer
@@ -162,7 +154,7 @@ module OpenAssets
 
     private
     def oa_version_byte
-      Bitcoin.network[:address_version] == "6f" ? OA_VERSION_BYTE_TESTNET : OA_VERSION_BYTE
+      Bitcoin.chain_params.mainnet? ? OA_VERSION_BYTE : OA_VERSION_BYTE_TESTNET
     end
 
     def calc_var_integer_val(byte_array)

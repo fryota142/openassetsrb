@@ -27,18 +27,18 @@ module OpenAssets
       # @return [String] The serialized payload.
       def to_payload
         payload = [OAP_MARKER, VERSION]
-        asset_quantity_count = Bitcoin::Protocol.pack_var_int(@asset_quantities.length).unpack("H*")
+        asset_quantity_count = Bitcoin.pack_var_int(@asset_quantities.length).unpack("H*")
         payload << sort_count(asset_quantity_count[0])
         @asset_quantities.map{|q|payload << encode_leb128(q)}
         @metadata ||= ''
-        metadata_length = Bitcoin::Protocol.pack_var_int(@metadata.length).unpack("H*")
+        metadata_length = Bitcoin.pack_var_int(@metadata.length).unpack("H*")
         payload << sort_count(metadata_length[0])
         payload << @metadata.bytes.map{|b| sprintf("%02x", b)}.join
         payload.join
       end
 
       # Deserialize the marker output payload.
-      # @param [String] payload The Open Assets Payload.
+      # @param [String] payload The Open Assets Payload with hex format.
       # @return [OpenAssets::Protocol::MarkerOutput] The marker output object.
       def self.deserialize_payload(payload)
         return nil unless valid?(payload)
@@ -53,10 +53,10 @@ module OpenAssets
 
       # Parses an output and returns the payload if the output matches the right pattern for a marker output,
       # @param [Bitcoin::Script] output_script: The output script to be parsed.
-      # @return [String] The byte string of the marker output payload if the output fits the pattern, nil otherwise.
+      # @return [String] The arker output payload with hex format if the output fits the pattern, nil otherwise.
       def self.parse_script(output_script)
-        data = Bitcoin::Script.new(output_script).get_op_return_data
-        return data if valid?(data)
+        data = output_script.op_return_data
+        return data.bth if data && valid?(data.bth)
       end
 
       # Creates an output script containing an OP_RETURN and a PUSHDATA from payload.
@@ -100,7 +100,8 @@ module OpenAssets
       end
 
       # validate marker output format
-      # @param[String] data marker output data with start with 4f41
+      # @param[String] data marker output data with hex format that start with 4f41.
+      # @return [Boolean] if valid marker output return true, otherwise false.
       def self.valid?(data)
         return false if data.nil?
         # check open assets marker

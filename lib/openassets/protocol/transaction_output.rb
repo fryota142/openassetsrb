@@ -72,12 +72,8 @@ module OpenAssets
       end
 
       def address
-        if @script.is_multisig?
-          @script.get_multisig_addresses.each do |address|
-            return nil if address.nil?
-          end
-        end
-        script_to_address(@script)
+        return @script.addresses.first if @script.p2pkh? || @script.p2sh? || @script.p2wpkh? || @script.p2wsh?
+        nil
       end
 
       def oa_address
@@ -92,26 +88,13 @@ module OpenAssets
 
       # get pubkey script type
       def script_type
-        case @script.type
-          when :hash160
-            'pubkeyhash'
-          when :pubkey
-            'pubkey'
-          when :multisig
-            'multisig'
-          when :p2sh
-            'scripthash'
-          when :op_return
-            'nulldata'
-          when :witness_v0_keyhash
-            'witness_v0_keyhash'
-          when :witness_v0_scripthash
-            'witness_v0_scripthash'
-          when :unknown
-            'nonstandard'
-          else
-            'nonstandard'
-        end
+        return 'pubkeyhash' if script.p2pkh?
+        return 'scripthash' if script.p2sh?
+        return 'nulldata' if script.standard_op_return?
+        return 'multisig' if script.multisig?
+        return 'witness_v0_keyhash' if script.p2wpkh?
+        return 'witness_v0_scripthash' if script.p2wsh?
+        'nonstandard'
       end
 
       private

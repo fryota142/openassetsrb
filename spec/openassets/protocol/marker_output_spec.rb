@@ -50,7 +50,7 @@ describe OpenAssets::Protocol::MarkerOutput do
     context 'valid script' do
       subject{
         # OP_RETURN 4f41010002014400 (colored coin marker output)
-        OpenAssets::Protocol::MarkerOutput.parse_script(Bitcoin::Script.new(['6a084f41010002014400'].pack("H*")).to_payload)
+        OpenAssets::Protocol::MarkerOutput.parse_script(Bitcoin::Script.parse_from_payload(['6a084f41010002014400'].pack("H*")))
       }
       it do
         expect(subject).to eq('4f41010002014400')
@@ -60,7 +60,7 @@ describe OpenAssets::Protocol::MarkerOutput do
     context 'not start oap marker' do
       subject{
         # OP_RETURN deadbeef (normal bitcoin op_return)
-        OpenAssets::Protocol::MarkerOutput.parse_script(Bitcoin::Script.new(['6a04deadbeef'].pack("H*")).to_payload)
+        OpenAssets::Protocol::MarkerOutput.parse_script(Bitcoin::Script.parse_from_payload(['6a04deadbeef'].pack("H*")))
       }
       it do
         expect(subject).to be_nil
@@ -69,15 +69,15 @@ describe OpenAssets::Protocol::MarkerOutput do
 
     context 'invalid varint' do
       it do
-        expect(OpenAssets::Protocol::MarkerOutput.parse_script(Bitcoin::Script.new(['6a224f41010001ee05753d68747470733a2f2f6370722e736d2f6d694c5a50484779782d'].pack("H*")).to_payload)).to be_nil
-        expect(OpenAssets::Protocol::MarkerOutput.parse_script(Bitcoin::Script.new(['6a094f41010002ac02c21c'].pack('H*')).to_payload)).to be_nil
+        expect(OpenAssets::Protocol::MarkerOutput.parse_script(Bitcoin::Script.parse_from_payload(['6a224f41010001ee05753d68747470733a2f2f6370722e736d2f6d694c5a50484779782d'].pack("H*")))).to be_nil
+        expect(OpenAssets::Protocol::MarkerOutput.parse_script(Bitcoin::Script.parse_from_payload(['6a094f41010002ac02c21c'].pack('H*')))).to be_nil
       end
     end
   end
 
   it 'build script' do
     script = OpenAssets::Protocol::MarkerOutput.new([10000], 'u=https://cpr.sm/5YgSU1Pg-q').build_script
-    expect(script.to_string).to eq('OP_RETURN 4f41010001904e1b753d68747470733a2f2f6370722e736d2f35596753553150672d71')
+    expect(script.to_s).to eq('OP_RETURN 4f41010001904e1b753d68747470733a2f2f6370722e736d2f35596753553150672d71')
   end
 
 end

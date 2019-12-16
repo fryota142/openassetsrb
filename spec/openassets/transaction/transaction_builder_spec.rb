@@ -17,20 +17,20 @@ describe OpenAssets::Transaction::TransactionBuilder do
     expect(result.in.length).to eq(2)
     expect(result.out.length).to eq(3)
     in0 = result.in[0]
-    expect(in0.prev_out.reverse_hth).to eq('8a7e2adf117199f93c8515266497d2b9954f3f3dea0f043e06c19ad2b21b8221')
-    expect(in0.prev_out_index).to eq(1)
+    expect(in0.out_point.tx_hash).to eq('8a7e2adf117199f93c8515266497d2b9954f3f3dea0f043e06c19ad2b21b8221')
+    expect(in0.out_point.index).to eq(1)
     expect(in0.script_sig).to eq('source')
     in1 = result.in[1]
-    expect(in1.prev_out.reverse_hth).to eq('8a7e2adf117199f93c8515266497d2b9954f3f3dea0f043e06c19ad2b21b8222')
-    expect(in1.prev_out_index).to eq(2)
+    expect(in1.out_point.tx_hash).to eq('8a7e2adf117199f93c8515266497d2b9954f3f3dea0f043e06c19ad2b21b8222')
+    expect(in1.out_point.index).to eq(2)
     expect(in1.script_sig).to eq('source')
     # Asset issued
     out0 = result.out[0]
     expect(out0.value).to eq(10)
-    expect(Bitcoin::Script.new(out0.pk_script).to_string).to eq('OP_DUP OP_HASH160 17797f19075a56e7d4fc23f2ea5c17020fd3b93d OP_EQUALVERIFY OP_CHECKSIG')
+    expect(out0.script_pubkey.to_s).to eq('OP_DUP OP_HASH160 17797f19075a56e7d4fc23f2ea5c17020fd3b93d OP_EQUALVERIFY OP_CHECKSIG')
     # Marker output
     out1 = result.out[1]
-    payload = OpenAssets::Protocol::MarkerOutput.parse_script(out1.pk_script)
+    payload = OpenAssets::Protocol::MarkerOutput.parse_script(out1.script_pubkey)
     marker_output = OpenAssets::Protocol::MarkerOutput.deserialize_payload(payload)
     expect(out1.value).to eq(0)
     expect(marker_output.asset_quantities).to eq([1000])
@@ -38,7 +38,7 @@ describe OpenAssets::Transaction::TransactionBuilder do
     # Bitcoin change
     out2 = result.out[2]
     expect(out2.value).to eq(10)
-    expect(Bitcoin::Script.new(out2.pk_script).to_string).to eq('OP_DUP OP_HASH160 17797f19075a56e7d4fc23f2ea5c17020fd3b93d OP_EQUALVERIFY OP_CHECKSIG')
+    expect(out2.script_pubkey.to_s).to eq('OP_DUP OP_HASH160 17797f19075a56e7d4fc23f2ea5c17020fd3b93d OP_EQUALVERIFY OP_CHECKSIG')
   end
 
   it 'collect uncolored outputs' do
@@ -67,14 +67,14 @@ describe OpenAssets::Transaction::TransactionBuilder do
       target = OpenAssets::Transaction::TransactionBuilder.new(10)
       expect{target.send(:create_uncolored_output, '1F2AQr6oqNtcJQ6p9SiCLQTrHuM9en44H8', 9)}.to raise_error(OpenAssets::Transaction::DustOutputError)
       tx_out = target.send(:create_uncolored_output, '1F2AQr6oqNtcJQ6p9SiCLQTrHuM9en44H8', 11)
-      expect(tx_out).to be_a(Bitcoin::Protocol::TxOut)
-      expect(tx_out.parsed_script.to_string).to eq('OP_DUP OP_HASH160 99ca0870645ebc81abbe0806318efc9ff474e540 OP_EQUALVERIFY OP_CHECKSIG')
+      expect(tx_out).to be_a(Bitcoin::TxOut)
+      expect(tx_out.script_pubkey.to_s).to eq('OP_DUP OP_HASH160 99ca0870645ebc81abbe0806318efc9ff474e540 OP_EQUALVERIFY OP_CHECKSIG')
     end
 
     it 'create_colored_output' do
       target = OpenAssets::Transaction::TransactionBuilder.new(10)
       tx_out = target.send(:create_colored_output, '1F2AQr6oqNtcJQ6p9SiCLQTrHuM9en44H8')
-      expect(tx_out.parsed_script.to_string).to eq('OP_DUP OP_HASH160 99ca0870645ebc81abbe0806318efc9ff474e540 OP_EQUALVERIFY OP_CHECKSIG')
+      expect(tx_out.script_pubkey.to_s).to eq('OP_DUP OP_HASH160 99ca0870645ebc81abbe0806318efc9ff474e540 OP_EQUALVERIFY OP_CHECKSIG')
     end
 
     it 'collect colored outputs' do
@@ -94,13 +94,13 @@ describe OpenAssets::Transaction::TransactionBuilder do
     it 'create_uncolored_output' do
       target = OpenAssets::Transaction::TransactionBuilder.new(10)
       tx_out = target.send(:create_uncolored_output, '2MtHrGGHzuiW18MF113xJmZXZ8AuBmbeXo4', 11)
-      expect(tx_out.parsed_script.to_string).to eq('OP_HASH160 0b773d2e93630161ea0c9cb6aa80c758d131cf9e OP_EQUAL')
+      expect(tx_out.script_pubkey.to_s).to eq('OP_HASH160 0b773d2e93630161ea0c9cb6aa80c758d131cf9e OP_EQUAL')
     end
 
     it 'create_colored_output' do
       target = OpenAssets::Transaction::TransactionBuilder.new(10)
       tx_out = target.send(:create_colored_output, '2MtHrGGHzuiW18MF113xJmZXZ8AuBmbeXo4')
-      expect(tx_out.parsed_script.to_string).to eq('OP_HASH160 0b773d2e93630161ea0c9cb6aa80c758d131cf9e OP_EQUAL')
+      expect(tx_out.script_pubkey.to_s).to eq('OP_HASH160 0b773d2e93630161ea0c9cb6aa80c758d131cf9e OP_EQUAL')
     end
   end
 
@@ -138,7 +138,7 @@ describe OpenAssets::Transaction::TransactionBuilder do
     tx = builder.transfer_asset(to, spec, from, 10000)
     expect(tx.in.length).to eq(4)
     expect(tx.out.length).to eq(5)
-    payload = OpenAssets::Protocol::MarkerOutput.parse_script(tx.out[0].pk_script)
+    payload = OpenAssets::Protocol::MarkerOutput.parse_script(tx.out[0].script_pubkey)
     marker_output = OpenAssets::Protocol::MarkerOutput.deserialize_payload(payload)
     expect(marker_output.asset_quantities).to eq([33, 33, 34])
     expect(tx.out[1].value).to eq(600)
@@ -165,14 +165,14 @@ describe OpenAssets::Transaction::TransactionBuilder do
     btc_transfer_specs = [OpenAssets::Transaction::TransferParameters.new(unspent_outputs_3, nil, change, 0)]
     tx = builder.send(:transfer, asset_transfer_specs, btc_transfer_specs, 0)
 
-    payload = OpenAssets::Protocol::MarkerOutput.parse_script(tx.out[0].pk_script)
+    payload = OpenAssets::Protocol::MarkerOutput.parse_script(tx.out[0].script_pubkey)
     marker_output = OpenAssets::Protocol::MarkerOutput.deserialize_payload(payload)
     expect(marker_output.asset_quantities).to eq([100,400,100,400])
-    expect(tx.out[1].parsed_script.get_address).to eq(to)
-    expect(tx.out[2].parsed_script.get_address).to eq(from[0])
-    expect(tx.out[3].parsed_script.get_address).to eq(to)
-    expect(tx.out[4].parsed_script.get_address).to eq(from[1])
-    expect(tx.out[5].parsed_script.get_address).to eq(change)
+    expect(tx.out[1].script_pubkey.addresses.first).to eq(to)
+    expect(tx.out[2].script_pubkey.addresses.first).to eq(from[0])
+    expect(tx.out[3].script_pubkey.addresses.first).to eq(to)
+    expect(tx.out[4].script_pubkey.addresses.first).to eq(from[1])
+    expect(tx.out[5].script_pubkey.addresses.first).to eq(change)
     expect(tx.out[5].value).to eq(1000)
   end
 
@@ -184,7 +184,7 @@ describe OpenAssets::Transaction::TransactionBuilder do
       results << OpenAssets::Transaction::SpendableOutput.new(
           OpenAssets::Transaction::OutPoint.new(definition[4], i),
           OpenAssets::Protocol::TransactionOutput.new(definition[0], # value
-                                                      Bitcoin::Script.new(definition[1]), # script
+                                                      Bitcoin::Script.parse_from_payload(definition[1]), # script
                                                       definition[2], # asset_id
                                                       definition[3]) # asset_quantity
       )

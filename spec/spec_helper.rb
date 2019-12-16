@@ -6,13 +6,13 @@ require 'json'
 RSpec.configure do |config|
   config.before(:each) do |example|
     if example.metadata[:network] == :testnet
-      Bitcoin.network = :testnet3
+      Bitcoin.chain_params = :testnet
     elsif example.metadata[:network] == :litecoin
-      Bitcoin.network = :litecoin
+      Bitcoin.chain_params = :litecoin
     elsif example.metadata[:network] == :litecoin_testnet
-      Bitcoin.network = :litecoin_testnet
+      Bitcoin.chain_params = :litecoin_testnet
     else
-      Bitcoin.network = :bitcoin
+      Bitcoin.chain_params = :mainnet
     end
   end
 end

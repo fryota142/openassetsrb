@@ -48,11 +48,11 @@ module OpenAssets
 
       # Signs a transaction in the serialized transaction format using private keys.
       # @param [String] tx The serialized format transaction.
-      # @return [Bitcoin::Protocol::Tx] The signed transaction.
+      # @return [Bitcoin::Tx] The signed transaction.
       def sign_transaction(tx)
         signed_tx = respond_to?(:signrawtransactionwithwallet) ? signrawtransactionwithwallet(tx) : signrawtransaction(tx)
         raise OpenAssets::Error, 'Could not sign the transaction.' unless signed_tx['complete']
-        Bitcoin::Protocol::Tx.new(signed_tx['hex'].htb)
+        Bitcoin::Tx.parse_from_payload(signed_tx['hex'].htb)
       end
 
       # Validates a transaction and broadcasts it to the peer-to-peer network.
@@ -66,27 +66,6 @@ module OpenAssets
       # @param [String] address Either a P2PKH or P2SH address encoded in base58check, or a pubkey script encoded as hex.
       def import_address(address)
         importaddress(address)
-      end
-
-      # Convert decode tx string to Bitcion::Protocol::Tx
-      def decode_tx_to_btc_tx(tx)
-        hash = {
-          'version' => tx['version'],
-          'lock_time' => tx['locktime'],
-          'hex' => tx['hex'],
-          'txid' => tx['txid'],
-          'blockhash' => tx['blockhash'],
-          'confirmations' => tx['confirmations'],
-          'time' => tx['time'],
-          'blocktime' => tx['blocktime'],
-          'in' => tx['vin'].map{|input|
-            {'output_index' => input['vout'], 'previous_transaction_hash' => input['txid'], 'coinbase' => input['coinbase'],
-             'scriptSig' => input['scriptSig']['asm'], 'sequence' => input['sequence']}},
-          'out' => tx['vout'].map{|out|
-            {'amount' => out['value'], 'scriptPubKey' => out['scriptPubKey']['asm']}
-          }
-        }
-        Bitcoin::Protocol::Tx.from_hash(hash)
       end
 
       def request(command, *params)

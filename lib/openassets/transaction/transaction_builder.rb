@@ -29,12 +29,12 @@ module OpenAssets
         
         inputs, total_amount =
             TransactionBuilder.collect_uncolored_outputs(issue_spec.unspent_outputs, 2 * @amount + fees)
-        tx = Bitcoin::Protocol::Tx.new
+        tx = Bitcoin::Tx.new
         inputs.each { |spendable|
-          script_sig = spendable.output.script.to_binary
-          tx_in = Bitcoin::Protocol::TxIn.from_hex_hash(spendable.out_point.hash, spendable.out_point.index)
+          script_sig = spendable.output.script.to_payload
+          tx_in = Bitcoin::TxIn.new(out_point: Bitcoin::OutPoint.new(spendable.out_point.hash, spendable.out_point.index))
           tx_in.script_sig = script_sig
-          tx.add_in(tx_in)
+          tx.in << tx_in
         }
         issue_address = oa_address_to_address(issue_spec.to_script)
         from_address = oa_address_to_address(issue_spec.change_script)
@@ -42,10 +42,10 @@ module OpenAssets
         asset_quantities =[]
         issue_spec.split_output_amount.each{|amount|
           asset_quantities << amount
-          tx.add_out(create_colored_output(issue_address))
+          tx.out << create_colored_output(issue_address)
         }
-        tx.add_out(create_marker_output(asset_quantities, metadata))
-        tx.add_out(create_uncolored_output(from_address, total_amount - @amount - fees))
+        tx.out << create_marker_output(asset_quantities, metadata)
+        tx.out << create_uncolored_output(from_address, total_amount - @amount - fees)
         tx
       end
 
@@ -54,7 +54,7 @@ module OpenAssets
       # @param[OpenAssets::Transaction::TransferParameters] asset_transfer_spec The parameters of the asset being transferred.
       # @param[String] btc_change_script The script where to send bitcoin change, if any.
       # @param[Integer] fees The fees to include in the transaction.
-      # @return[Bitcoin::Protocol:Tx] The resulting unsigned transaction.
+      # @return[Bitcoin::Tx] The resulting unsigned transaction.
       def transfer_asset(asset_id, asset_transfer_spec, btc_change_script, fees)
         btc_transfer_spec = OpenAssets::Transaction::TransferParameters.new(
             asset_transfer_spec.unspent_outputs, nil, oa_address_to_address(btc_change_script), 0)
@@ -65,7 +65,7 @@ module OpenAssets
       # @param[Array[OpenAssets::Transaction::TransferParameters]] asset_transfer_spec The parameters of the asset being transferred.
       # @param[OpenAssets::Transaction::TransferParameters] btc_transfer_spec The script where to send bitcoin change, if any.
       # @param[Integer] fees The fees to include in the transaction.
-      # @return[Bitcoin::Protocol:Tx] The resulting unsigned transaction.
+      # @return[Bitcoin::Tx] The resulting unsigned transaction.
       def transfer_assets(transfer_specs, btc_transfer_spec, fees)
         transfer(transfer_specs, [btc_transfer_spec], fees)
       end
@@ -73,7 +73,7 @@ module OpenAssets
       # Creates a transaction for sending bitcoins.
       # @param[OpenAssets::Transaction::TransferParameters] btc_transfer_spec The parameters of the bitcoins being transferred.
       # @param[Integer] fees The fees to include in the transaction.
-      # @return[Bitcoin::Protocol:Tx] The resulting unsigned transaction.
+      # @return[Bitcoin::Tx] The resulting unsigned transaction.
       def transfer_btc(btc_transfer_spec, fees)
         transfer_btcs([btc_transfer_spec], fees)
       end
@@ -81,7 +81,7 @@ module OpenAssets
       # Creates a transaction for sending bitcoins to many.
       # @param[Array[OpenAssets::Transaction::TransferParameters]] btc_transfer_specs The parameters of the bitcoins being transferred.
       # @param[Integer] fees The fees to include in the transaction.
-      # @return[Bitcoin::Protocol:Tx] The resulting unsigned transaction.
+      # @return[Bitcoin::Tx] The resulting unsigned transaction.
       def transfer_btcs(btc_transfer_specs, fees)
         transfer([], btc_transfer_specs, fees)
       end
@@ -89,7 +89,7 @@ module OpenAssets
       # Create a transaction for burn asset
       def burn_asset(unspents, asset_id, fee)
 
-        tx = Bitcoin::Protocol::Tx.new
+        tx = Bitcoin::Tx.new
         targets = unspents.select{|o|o.output.asset_id == asset_id}
 
         if fee == :auto
@@ -107,12 +107,10 @@ module OpenAssets
           otsuri += uncolored_amount
         end
         targets.each{|o|
-          script_sig = o.output.script.to_binary
-          tx_in = Bitcoin::Protocol::TxIn.from_hex_hash(o.out_point.hash, o.out_point.index)
-          tx_in.script_sig = script_sig
-          tx.add_in(tx_in)
+          tx_in = Bitcoin::TxIn.new(out_point: Bitcoin::OutPoint.new(o.out_point.hash, o.out_point.index), script_sig: o.output.script)
+          tx.in << tx_in
         }
-        tx.add_out(create_uncolored_output(targets[0].output.address, otsuri))
+        tx.out << create_uncolored_output(targets[0].output.address, otsuri)
         tx
       end
 
@@ -154,27 +152,27 @@ module OpenAssets
       private
       # create colored output.
       # @param [String] address The Bitcoin address.
-      # @return [Bitcoin::Protocol::TxOut] colored output
+      # @return [Bitcoin::TxOut] colored output
       def create_colored_output(address)
-        Bitcoin::Protocol::TxOut.new(@amount, Bitcoin::Script.new(Bitcoin::Script.to_address_script(address)).to_payload)
+        Bitcoin::TxOut.new(value: @amount, script_pubkey: Bitcoin::Script.parse_from_addr(address))
       end
 
       # create marker output.
       # @param [Array] asset_quantities asset_quantity array.
       # @param [String] metadata
-      # @return [Bitcoin::Protocol::TxOut] the marker output.
+      # @return [Bitcoin::TxOut] the marker output.
       def create_marker_output(asset_quantities, metadata = '')
         script = OpenAssets::Protocol::MarkerOutput.new(asset_quantities, metadata).build_script
-        Bitcoin::Protocol::TxOut.new(0, script.to_payload)
+        Bitcoin::TxOut.new(value: 0, script_pubkey: script)
       end
 
       # create an uncolored output.
       # @param [String] address: The Bitcoin address.
       # @param [Integer] value: The satoshi value of the output.
-      # @return [Bitcoin::Protocol::TxOut] an uncolored output.
+      # @return [Bitcoin::TxOut] an uncolored output.
       def create_uncolored_output(address, value)
         raise DustOutputError if value < @amount
-        Bitcoin::Protocol::TxOut.new(value, Bitcoin::Script.new(Bitcoin::Script.to_address_script(address)).to_payload)
+        Bitcoin::TxOut.new(value: value, script_pubkey: Bitcoin::Script.parse_from_addr(address))
       end
 
 
@@ -182,7 +180,7 @@ module OpenAssets
       # @param[Array[OpenAssets::Transaction::TransferParameters]] asset_transfer_specs The parameters of the assets being transferred.
       # @param[Array[OpenAssets::Transaction::TransferParameters]] btc_transfer_specs The parameters of the bitcoins being transferred.
       # @param[Integer] fees The fees to include in the transaction.
-      # @return[Bitcoin::Protocol:Tx] The resulting unsigned transaction.
+      # @return[Bitcoin::Tx] The resulting unsigned transaction.
       def transfer(asset_transfer_specs, btc_transfer_specs, fees)
         inputs = []     # vin field
         outputs = []    # vout field
@@ -286,16 +284,14 @@ module OpenAssets
         end
 
         # create a bitcoin transaction (assembling inputs and output into one transaction)
-        tx = Bitcoin::Protocol::Tx.new
+        tx = Bitcoin::Tx.new
         # for all inputs (vin fields), add sigs to the same transaction
         inputs.flatten.each{|i|
-          script_sig = i.output.script.to_binary
-          tx_in = Bitcoin::Protocol::TxIn.from_hex_hash(i.out_point.hash, i.out_point.index)
-          tx_in.script_sig = script_sig
-          tx.add_in(tx_in)
+          tx_in = Bitcoin::TxIn.new(out_point: Bitcoin::OutPoint.new(i.out_point.hash, i.out_point.index), script_sig: i.output.script)
+          tx.in << tx_in
         }
 
-        outputs.each{|o|tx.add_out(o)}
+        outputs.each{|o|tx.out << o}
         
         tx
       end

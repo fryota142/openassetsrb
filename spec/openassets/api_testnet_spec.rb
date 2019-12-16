@@ -138,18 +138,18 @@ describe 'OpenAssets::Api use testnet', :network => :testnet do
           expect(tx.inputs.length).to eq(6)
           expect(tx.outputs.length).to eq(6)
           # marker output
-          marker_output_payload = OpenAssets::Protocol::MarkerOutput.parse_script(tx.outputs[0].pk_script)
+          marker_output_payload = OpenAssets::Protocol::MarkerOutput.parse_script(tx.outputs[0].script_pubkey)
           marker_output = OpenAssets::Protocol::MarkerOutput.deserialize_payload(marker_output_payload)
           expect(tx.outputs[0].value).to eq(0)
           expect(marker_output.asset_quantities).to eq([50, 22, 4, 2])
           # output for oGu4VXx2TU97d9LmPP8PMCkHckkcPqC5RY
-          expect(tx.outputs[1].parsed_script.to_string).to eq('OP_DUP OP_HASH160 fa7491ee214ab15241a613fb5906f6df996bb08b OP_EQUALVERIFY OP_CHECKSIG')
-          expect(tx.outputs[2].parsed_script.to_string).to eq('OP_DUP OP_HASH160 7d8dd16cc3413a64a9964c91cb0ee9358ab1dff6 OP_EQUALVERIFY OP_CHECKSIG')
+          expect(tx.outputs[1].script_pubkey.to_s).to eq('OP_DUP OP_HASH160 fa7491ee214ab15241a613fb5906f6df996bb08b OP_EQUALVERIFY OP_CHECKSIG')
+          expect(tx.outputs[2].script_pubkey.to_s).to eq('OP_DUP OP_HASH160 7d8dd16cc3413a64a9964c91cb0ee9358ab1dff6 OP_EQUALVERIFY OP_CHECKSIG')
           # output for oUygwarZqNGrjDvcZUpZdvEc7es6dcs1vs
-          expect(tx.outputs[3].parsed_script.to_string).to eq('OP_DUP OP_HASH160 fa7491ee214ab15241a613fb5906f6df996bb08b OP_EQUALVERIFY OP_CHECKSIG')
-          expect(tx.outputs[4].parsed_script.to_string).to eq('OP_DUP OP_HASH160 7d8dd16cc3413a64a9964c91cb0ee9358ab1dff6 OP_EQUALVERIFY OP_CHECKSIG')
+          expect(tx.outputs[3].script_pubkey.to_s).to eq('OP_DUP OP_HASH160 fa7491ee214ab15241a613fb5906f6df996bb08b OP_EQUALVERIFY OP_CHECKSIG')
+          expect(tx.outputs[4].script_pubkey.to_s).to eq('OP_DUP OP_HASH160 7d8dd16cc3413a64a9964c91cb0ee9358ab1dff6 OP_EQUALVERIFY OP_CHECKSIG')
           # output for otsuri
-          expect(tx.outputs[5].parsed_script.to_string).to eq('OP_DUP OP_HASH160 7d8dd16cc3413a64a9964c91cb0ee9358ab1dff6 OP_EQUALVERIFY OP_CHECKSIG')
+          expect(tx.outputs[5].script_pubkey.to_s).to eq('OP_DUP OP_HASH160 7d8dd16cc3413a64a9964c91cb0ee9358ab1dff6 OP_EQUALVERIFY OP_CHECKSIG')
           expect(tx.outputs[5].value).to eq(90600)
         end
       end
@@ -167,19 +167,19 @@ describe 'OpenAssets::Api use testnet', :network => :testnet do
           expect(tx.inputs.length).to eq(6)
           expect(tx.outputs.length).to eq(7)
           # marker output
-          marker_output_payload = OpenAssets::Protocol::MarkerOutput.parse_script(tx.outputs[0].pk_script)
+          marker_output_payload = OpenAssets::Protocol::MarkerOutput.parse_script(tx.outputs[0].script_pubkey)
           marker_output = OpenAssets::Protocol::MarkerOutput.deserialize_payload(marker_output_payload)
           expect(tx.outputs[0].value).to eq(0)
           expect(marker_output.asset_quantities).to eq([30, 20, 22, 4, 2])
           # output for oGu4VXx2TU97d9LmPP8PMCkHckkcPqC5RY
-          expect(tx.outputs[1].parsed_script.to_string).to eq('OP_DUP OP_HASH160 fa7491ee214ab15241a613fb5906f6df996bb08b OP_EQUALVERIFY OP_CHECKSIG')
-          expect(tx.outputs[2].parsed_script.to_string).to eq('OP_DUP OP_HASH160 8130f96080e598cc4e210067eb54403074aa1a8d OP_EQUALVERIFY OP_CHECKSIG')
-          expect(tx.outputs[3].parsed_script.to_string).to eq('OP_DUP OP_HASH160 7d8dd16cc3413a64a9964c91cb0ee9358ab1dff6 OP_EQUALVERIFY OP_CHECKSIG')
+          expect(tx.outputs[1].script_pubkey.to_s).to eq('OP_DUP OP_HASH160 fa7491ee214ab15241a613fb5906f6df996bb08b OP_EQUALVERIFY OP_CHECKSIG')
+          expect(tx.outputs[2].script_pubkey.to_s).to eq('OP_DUP OP_HASH160 8130f96080e598cc4e210067eb54403074aa1a8d OP_EQUALVERIFY OP_CHECKSIG')
+          expect(tx.outputs[3].script_pubkey.to_s).to eq('OP_DUP OP_HASH160 7d8dd16cc3413a64a9964c91cb0ee9358ab1dff6 OP_EQUALVERIFY OP_CHECKSIG')
           # output for oUygwarZqNGrjDvcZUpZdvEc7es6dcs1vs
-          expect(tx.outputs[4].parsed_script.to_string).to eq('OP_DUP OP_HASH160 fa7491ee214ab15241a613fb5906f6df996bb08b OP_EQUALVERIFY OP_CHECKSIG')
-          expect(tx.outputs[5].parsed_script.to_string).to eq('OP_DUP OP_HASH160 7d8dd16cc3413a64a9964c91cb0ee9358ab1dff6 OP_EQUALVERIFY OP_CHECKSIG')
+          expect(tx.outputs[4].script_pubkey.to_s).to eq('OP_DUP OP_HASH160 fa7491ee214ab15241a613fb5906f6df996bb08b OP_EQUALVERIFY OP_CHECKSIG')
+          expect(tx.outputs[5].script_pubkey.to_s).to eq('OP_DUP OP_HASH160 7d8dd16cc3413a64a9964c91cb0ee9358ab1dff6 OP_EQUALVERIFY OP_CHECKSIG')
           # output for otsuri
-          expect(tx.outputs[6].parsed_script.to_string).to eq('OP_DUP OP_HASH160 7d8dd16cc3413a64a9964c91cb0ee9358ab1dff6 OP_EQUALVERIFY OP_CHECKSIG')
+          expect(tx.outputs[6].script_pubkey.to_s).to eq('OP_DUP OP_HASH160 7d8dd16cc3413a64a9964c91cb0ee9358ab1dff6 OP_EQUALVERIFY OP_CHECKSIG')
           expect(tx.outputs[6].value).to eq(90000)
         end
       end
@@ -200,13 +200,13 @@ describe 'OpenAssets::Api use testnet', :network => :testnet do
         expect(subject.outputs.length).to eq(3)
 
         # output for otsuri mvYbB238p3rFYFjM56cHhNNHeQb5ypQJ3T
-        expect(subject.outputs[0].parsed_script.get_address).to eq('mvYbB238p3rFYFjM56cHhNNHeQb5ypQJ3T')
+        expect(subject.outputs[0].script_pubkey.addresses.first).to eq('mvYbB238p3rFYFjM56cHhNNHeQb5ypQJ3T')
         expect(subject.outputs[0].value).to eq(69000)
         # output for to_1 mjLSaCyJHCSeh4MsiNGnF1RLqD9ySqnAQ1
-        expect(subject.outputs[1].parsed_script.get_address).to eq('mjLSaCyJHCSeh4MsiNGnF1RLqD9ySqnAQ1')
+        expect(subject.outputs[1].script_pubkey.addresses.first).to eq('mjLSaCyJHCSeh4MsiNGnF1RLqD9ySqnAQ1')
         expect(subject.outputs[1].value).to eq(20000)
         # output for to_2 mnm6Lik5HqjrBXZtbRgTio4VSY5FyoUfrJ
-        expect(subject.outputs[2].parsed_script.get_address).to eq('mnm6Lik5HqjrBXZtbRgTio4VSY5FyoUfrJ')
+        expect(subject.outputs[2].script_pubkey.addresses.first).to eq('mnm6Lik5HqjrBXZtbRgTio4VSY5FyoUfrJ')
         expect(subject.outputs[2].value).to eq(1000)
       end
     end
@@ -222,19 +222,19 @@ describe 'OpenAssets::Api use testnet', :network => :testnet do
         }
         it do
           expect(subject.inputs.length).to eq(4)
-          expect(subject.inputs[0].prev_out_hash.reverse_hth).to eq('6887dd16b7ad2847bd4546211665199e05711c3acd1a67da879506adb5486910')
-          expect(subject.inputs[0].prev_out_index).to eq(1)
-          expect(subject.inputs[1].prev_out_hash.reverse_hth).to eq('6887dd16b7ad2847bd4546211665199e05711c3acd1a67da879506adb5486910')
-          expect(subject.inputs[1].prev_out_index).to eq(2)
-          expect(subject.inputs[2].prev_out_hash.reverse_hth).to eq('6887dd16b7ad2847bd4546211665199e05711c3acd1a67da879506adb5486910')
-          expect(subject.inputs[2].prev_out_index).to eq(3)
-          expect(subject.inputs[3].prev_out_hash.reverse_hth).to eq('308ea73b45bef1428acb41f996543d6ebd534dca8f5de965e7f00eae084aaa5c')
-          expect(subject.inputs[3].prev_out_index).to eq(1)
+          expect(subject.inputs[0].out_point.tx_hash).to eq('6887dd16b7ad2847bd4546211665199e05711c3acd1a67da879506adb5486910')
+          expect(subject.inputs[0].out_point.index).to eq(1)
+          expect(subject.inputs[1].out_point.tx_hash).to eq('6887dd16b7ad2847bd4546211665199e05711c3acd1a67da879506adb5486910')
+          expect(subject.inputs[1].out_point.index).to eq(2)
+          expect(subject.inputs[2].out_point.tx_hash).to eq('6887dd16b7ad2847bd4546211665199e05711c3acd1a67da879506adb5486910')
+          expect(subject.inputs[2].out_point.index).to eq(3)
+          expect(subject.inputs[3].out_point.tx_hash).to eq('308ea73b45bef1428acb41f996543d6ebd534dca8f5de965e7f00eae084aaa5c')
+          expect(subject.inputs[3].out_point.index).to eq(1)
 
           expect(subject.outputs.length).to eq(1)
           expect(subject.outputs[0].value).to eq(81800)
-          script = Bitcoin::Script.new(Bitcoin::Script.to_hash160_script(Bitcoin.hash160_from_address(btc_address)))
-          expect(subject.outputs[0].parsed_script.to_string).to eq(script.to_string)
+          script = Bitcoin::Script.parse_from_addr(btc_address)
+          expect(subject.outputs[0].script_pubkey).to eq(script)
         end
       end
 
@@ -316,13 +316,13 @@ describe 'OpenAssets::Api use testnet', :network => :testnet do
       expected_otsuri = 79000 - (1 + tx.to_payload.bytesize/1_000) * estimatefee_satoshi
 
       # output for otsuri mvYbB238p3rFYFjM56cHhNNHeQb5ypQJ3T
-      expect(tx.outputs[0].parsed_script.get_address).to eq('mvYbB238p3rFYFjM56cHhNNHeQb5ypQJ3T')
+      expect(tx.outputs[0].script_pubkey.addresses.first).to eq('mvYbB238p3rFYFjM56cHhNNHeQb5ypQJ3T')
       expect(tx.outputs[0].value).to eq(expected_otsuri)
       # output for to_1 mjLSaCyJHCSeh4MsiNGnF1RLqD9ySqnAQ1
-      expect(tx.outputs[1].parsed_script.get_address).to eq('mjLSaCyJHCSeh4MsiNGnF1RLqD9ySqnAQ1')
+      expect(tx.outputs[1].script_pubkey.addresses.first).to eq('mjLSaCyJHCSeh4MsiNGnF1RLqD9ySqnAQ1')
       expect(tx.outputs[1].value).to eq(20000)
       # output for to_2 mnm6Lik5HqjrBXZtbRgTio4VSY5FyoUfrJ
-      expect(tx.outputs[2].parsed_script.get_address).to eq('mnm6Lik5HqjrBXZtbRgTio4VSY5FyoUfrJ')
+      expect(tx.outputs[2].script_pubkey.addresses.first).to eq('mnm6Lik5HqjrBXZtbRgTio4VSY5FyoUfrJ')
       expect(tx.outputs[2].value).to eq(1000)
     end
   end

@@ -14,16 +14,16 @@ describe 'OpenAssets::Api use mainnet' do
     expect(api.config[:min_confirmation]).to eq(1)
     expect(api.config[:max_confirmation]).to eq(9999999)
     expect(api.config[:cache]).to eq('cache.db')
-    expect(Bitcoin.network_name).to eq(:bitcoin)
+    expect(Bitcoin.chain_params.network).to eq('mainnet')
     api = OpenAssets::Api.new(JSON.parse(File.read("#{File.dirname(__FILE__)}/../test-config.json"), {:symbolize_names => true}))
     expect(api.is_testnet?).to be true
-    expect(Bitcoin.network_name).to eq(:testnet3)
+    expect(Bitcoin.chain_params.network).to eq('testnet')
     expect(api.config[:min_confirmation]).to eq(0)
     expect(api.config[:max_confirmation]).to eq(1)
     expect{OpenAssets::Api.new({:provider => 'hoge'})}.to raise_error(OpenAssets::Error)
 
     OpenAssets::Api.new(:network => 'regtest')
-    expect(Bitcoin.network_name).to eq(:regtest)
+    expect(Bitcoin.chain_params.network).to eq('regtest')
   end
 
   context 'use provider' do
@@ -89,26 +89,26 @@ describe 'OpenAssets::Api use mainnet' do
       address = 'akEJwzkzEFau4t2wjbXoMs7MwtZkB8xixmH'
       tx = subject.issue_asset(
         address, 125, 'u=https://goo.gl/bmVEuw', address, nil, 'unsigned', 2)
-      expect(tx.ver).to eq(1)
+      expect(tx.version).to eq(1)
       expect(tx.lock_time).to eq(0)
       expect(tx.inputs.length).to eq(1)
-      expect(tx.inputs[0].prev_out.reverse_hth).to eq('21b093ec41244898a50e1f97cb80fd98d7714c7235e0a4a30d7d0c6fb6a6ce8a')
-      expect(tx.inputs[0].prev_out_index).to eq(1)
+      expect(tx.inputs[0].out_point.tx_hash).to eq('21b093ec41244898a50e1f97cb80fd98d7714c7235e0a4a30d7d0c6fb6a6ce8a')
+      expect(tx.inputs[0].out_point.index).to eq(1)
       expect(tx.outputs.length).to eq(4)
       # issue output
       expect(tx.outputs[0].value).to eq(600)
-      expect(tx.outputs[0].parsed_script.to_string).to eq('OP_DUP OP_HASH160 24b3d405bc60bd9628691fe28bb00f6800e14806 OP_EQUALVERIFY OP_CHECKSIG')
+      expect(tx.outputs[0].script_pubkey.to_s).to eq('OP_DUP OP_HASH160 24b3d405bc60bd9628691fe28bb00f6800e14806 OP_EQUALVERIFY OP_CHECKSIG')
       expect(tx.outputs[1].value).to eq(600)
-      expect(tx.outputs[1].parsed_script.to_string).to eq('OP_DUP OP_HASH160 24b3d405bc60bd9628691fe28bb00f6800e14806 OP_EQUALVERIFY OP_CHECKSIG')
+      expect(tx.outputs[1].script_pubkey.to_s).to eq('OP_DUP OP_HASH160 24b3d405bc60bd9628691fe28bb00f6800e14806 OP_EQUALVERIFY OP_CHECKSIG')
       # marker output
-      marker_output_payload = OpenAssets::Protocol::MarkerOutput.parse_script(tx.outputs[2].pk_script)
+      marker_output_payload = OpenAssets::Protocol::MarkerOutput.parse_script(tx.outputs[2].script_pubkey)
       marker_output = OpenAssets::Protocol::MarkerOutput.deserialize_payload(marker_output_payload)
       expect(tx.outputs[2].value).to eq(0)
       expect(marker_output.asset_quantities).to eq([62, 63])
       expect(marker_output.metadata).to eq('u=https://goo.gl/bmVEuw')
       # bitcoin change
       expect(tx.outputs[3].value).to eq(89400)
-      expect(tx.outputs[3].parsed_script.to_string).to eq('OP_DUP OP_HASH160 24b3d405bc60bd9628691fe28bb00f6800e14806 OP_EQUALVERIFY OP_CHECKSIG')
+      expect(tx.outputs[3].script_pubkey.to_s).to eq('OP_DUP OP_HASH160 24b3d405bc60bd9628691fe28bb00f6800e14806 OP_EQUALVERIFY OP_CHECKSIG')
     end
 
     it 'issue_asset metadata nil' do
@@ -116,7 +116,7 @@ describe 'OpenAssets::Api use mainnet' do
       tx = subject.issue_asset(address, 125, nil, address, nil, 'unsigned')
       expect(tx.inputs.length).to eq(1)
       expect(tx.outputs.length).to eq(3)
-      marker_output_payload = OpenAssets::Protocol::MarkerOutput.parse_script(tx.outputs[1].pk_script)
+      marker_output_payload = OpenAssets::Protocol::MarkerOutput.parse_script(tx.outputs[1].script_pubkey)
       marker_output = OpenAssets::Protocol::MarkerOutput.deserialize_payload(marker_output_payload)
       expect(tx.outputs[1].value).to eq(0)
       expect(marker_output.asset_quantities).to eq([125])
@@ -228,50 +228,50 @@ describe 'OpenAssets::Api use mainnet' do
       to = 'akP4AgdxY5zsfSxM6Jach3YQGZE7vM1o8si'
       tx = subject.send_asset(from, asset_id, 10, to, 10000, 'unsigned')
       # actual test txid = f9922c146b386fc7017a12d0ed8ee9fdd4b93442600eff771d6211772d349a73
-      expect(tx.ver).to eq(1)
+      expect(tx.version).to eq(1)
       expect(tx.lock_time).to eq(0)
       expect(tx.inputs.length).to eq(3)
-      expect(tx.inputs[0].prev_out_index).to eq(2)
-      expect(tx.inputs[0].prev_out.reverse_hth).to eq('97f5fdfe133005c033ea3185202c53bb59d0760e9f9dd2cc2f8c50bbce8ec8bb')
-      expect(tx.inputs[1].prev_out_index).to eq(2)
-      expect(tx.inputs[1].prev_out.reverse_hth).to eq('9da5541e6653b03437264ab249170dccee24cdfe6351826df2f4b63079df2d4d')
+      expect(tx.inputs[0].out_point.index).to eq(2)
+      expect(tx.inputs[0].out_point.tx_hash).to eq('97f5fdfe133005c033ea3185202c53bb59d0760e9f9dd2cc2f8c50bbce8ec8bb')
+      expect(tx.inputs[1].out_point.index).to eq(2)
+      expect(tx.inputs[1].out_point.tx_hash).to eq('9da5541e6653b03437264ab249170dccee24cdfe6351826df2f4b63079df2d4d')
       # ↑の２つのUTXOはアセット転送のアウトプットで、Bitcoinが不足してるので↓のトランザクションも追加
-      expect(tx.inputs[2].prev_out_index).to eq(2)
-      expect(tx.inputs[2].prev_out.reverse_hth).to eq('92ecb6c38bfefc3b6ff8b48a2dd14ece823d37c02adbeeeeede5a801e4926ece')
+      expect(tx.inputs[2].out_point.index).to eq(2)
+      expect(tx.inputs[2].out_point.tx_hash).to eq('92ecb6c38bfefc3b6ff8b48a2dd14ece823d37c02adbeeeeede5a801e4926ece')
 
       expect(tx.outputs.length).to eq(4)
       # marker output
-      marker_output_payload = OpenAssets::Protocol::MarkerOutput.parse_script(tx.outputs[0].pk_script)
+      marker_output_payload = OpenAssets::Protocol::MarkerOutput.parse_script(tx.outputs[0].script_pubkey)
       marker_output = OpenAssets::Protocol::MarkerOutput.deserialize_payload(marker_output_payload)
       expect(tx.outputs[0].value).to eq(0)
       expect(marker_output.asset_quantities).to eq([10, 14])
       # asset transfer
       expect(tx.outputs[1].value).to eq(600)
-      expect(tx.outputs[1].parsed_script.to_string).to eq('OP_DUP OP_HASH160 84a14fd7c4c522d59158f91f78c250278f66a899 OP_EQUALVERIFY OP_CHECKSIG')
+      expect(tx.outputs[1].script_pubkey.to_s).to eq('OP_DUP OP_HASH160 84a14fd7c4c522d59158f91f78c250278f66a899 OP_EQUALVERIFY OP_CHECKSIG')
       expect(tx.outputs[2].value).to eq(600)
-      expect(tx.outputs[2].parsed_script.to_string).to eq('OP_DUP OP_HASH160 b7218fe503cd18555255e5b13d4f07f3fd00d0c9 OP_EQUALVERIFY OP_CHECKSIG')
+      expect(tx.outputs[2].script_pubkey.to_s).to eq('OP_DUP OP_HASH160 b7218fe503cd18555255e5b13d4f07f3fd00d0c9 OP_EQUALVERIFY OP_CHECKSIG')
       # bitcoin rest
       expect(tx.outputs[3].value).to eq(16400)
-      expect(tx.outputs[3].parsed_script.to_string).to eq('OP_DUP OP_HASH160 b7218fe503cd18555255e5b13d4f07f3fd00d0c9 OP_EQUALVERIFY OP_CHECKSIG')
+      expect(tx.outputs[3].script_pubkey.to_s).to eq('OP_DUP OP_HASH160 b7218fe503cd18555255e5b13d4f07f3fd00d0c9 OP_EQUALVERIFY OP_CHECKSIG')
 
       # split output_qty
       tx = subject.send_asset(from, asset_id, 10, to, 10000, 'unsigned', 3)
       expect(tx.outputs.length).to eq(6)
-      marker_output_payload = OpenAssets::Protocol::MarkerOutput.parse_script(tx.outputs[0].pk_script)
+      marker_output_payload = OpenAssets::Protocol::MarkerOutput.parse_script(tx.outputs[0].script_pubkey)
       marker_output = OpenAssets::Protocol::MarkerOutput.deserialize_payload(marker_output_payload)
       expect(tx.outputs[0].value).to eq(0)
       expect(marker_output.asset_quantities).to eq([3, 3, 4, 14])
       expect(tx.outputs[1].value).to eq(600)
-      expect(tx.outputs[1].parsed_script.to_string).to eq('OP_DUP OP_HASH160 84a14fd7c4c522d59158f91f78c250278f66a899 OP_EQUALVERIFY OP_CHECKSIG')
+      expect(tx.outputs[1].script_pubkey.to_s).to eq('OP_DUP OP_HASH160 84a14fd7c4c522d59158f91f78c250278f66a899 OP_EQUALVERIFY OP_CHECKSIG')
       expect(tx.outputs[2].value).to eq(600)
-      expect(tx.outputs[2].parsed_script.to_string).to eq('OP_DUP OP_HASH160 84a14fd7c4c522d59158f91f78c250278f66a899 OP_EQUALVERIFY OP_CHECKSIG')
+      expect(tx.outputs[2].script_pubkey.to_s).to eq('OP_DUP OP_HASH160 84a14fd7c4c522d59158f91f78c250278f66a899 OP_EQUALVERIFY OP_CHECKSIG')
       expect(tx.outputs[3].value).to eq(600)
-      expect(tx.outputs[3].parsed_script.to_string).to eq('OP_DUP OP_HASH160 84a14fd7c4c522d59158f91f78c250278f66a899 OP_EQUALVERIFY OP_CHECKSIG')
+      expect(tx.outputs[3].script_pubkey.to_s).to eq('OP_DUP OP_HASH160 84a14fd7c4c522d59158f91f78c250278f66a899 OP_EQUALVERIFY OP_CHECKSIG')
       expect(tx.outputs[4].value).to eq(600)
-      expect(tx.outputs[4].parsed_script.to_string).to eq('OP_DUP OP_HASH160 b7218fe503cd18555255e5b13d4f07f3fd00d0c9 OP_EQUALVERIFY OP_CHECKSIG')
+      expect(tx.outputs[4].script_pubkey.to_s).to eq('OP_DUP OP_HASH160 b7218fe503cd18555255e5b13d4f07f3fd00d0c9 OP_EQUALVERIFY OP_CHECKSIG')
       # bitcoin rest
       expect(tx.outputs[5].value).to eq(15200)
-      expect(tx.outputs[5].parsed_script.to_string).to eq('OP_DUP OP_HASH160 b7218fe503cd18555255e5b13d4f07f3fd00d0c9 OP_EQUALVERIFY OP_CHECKSIG')
+      expect(tx.outputs[5].script_pubkey.to_s).to eq('OP_DUP OP_HASH160 b7218fe503cd18555255e5b13d4f07f3fd00d0c9 OP_EQUALVERIFY OP_CHECKSIG')
 
     end
 
@@ -285,16 +285,16 @@ describe 'OpenAssets::Api use mainnet' do
       ]
       tx = subject.send_assets(from, params, 10000, 'unsigned')
 
-      expect(tx.ver).to eq(1)
+      expect(tx.version).to eq(1)
       expect(tx.lock_time).to eq(0)
-      marker_output_payload = OpenAssets::Protocol::MarkerOutput.parse_script(tx.outputs[0].pk_script)
+      marker_output_payload = OpenAssets::Protocol::MarkerOutput.parse_script(tx.outputs[0].script_pubkey)
       marker_output = OpenAssets::Protocol::MarkerOutput.deserialize_payload(marker_output_payload)
       expect(tx.outputs.length).to eq(5)
       expect(marker_output.asset_quantities).to eq([10, 10, 4])
-      expect(tx.out[1].parsed_script.get_address).to eq(oa_address_to_address to[0])
-      expect(tx.out[2].parsed_script.get_address).to eq(oa_address_to_address to[1])
-      expect(tx.out[3].parsed_script.get_address).to eq(oa_address_to_address from)
-      expect(tx.out[4].parsed_script.get_address).to eq(oa_address_to_address from)
+      expect(tx.out[1].script_pubkey.addresses.first).to eq(oa_address_to_address to[0])
+      expect(tx.out[2].script_pubkey.addresses.first).to eq(oa_address_to_address to[1])
+      expect(tx.out[3].script_pubkey.addresses.first).to eq(oa_address_to_address from)
+      expect(tx.out[4].script_pubkey.addresses.first).to eq(oa_address_to_address from)
 
       # multiple from addresses
       from = %w(akTfC7D825Cse4NvFiLCy7vr3B6x2Mpq8t6 akXDPMMHHBrUrd1fM756M1GSB8viVAwMyBk)
@@ -306,17 +306,17 @@ describe 'OpenAssets::Api use mainnet' do
       ]
       tx = subject.send_assets(change, params, 10000, 'unsigned')
 
-      expect(tx.ver).to eq(1)
+      expect(tx.version).to eq(1)
       expect(tx.lock_time).to eq(0)
-      marker_output_payload = OpenAssets::Protocol::MarkerOutput.parse_script(tx.outputs[0].pk_script)
+      marker_output_payload = OpenAssets::Protocol::MarkerOutput.parse_script(tx.outputs[0].script_pubkey)
       marker_output = OpenAssets::Protocol::MarkerOutput.deserialize_payload(marker_output_payload)
       expect(tx.outputs.length).to eq(6)
       expect(marker_output.asset_quantities).to eq([10, 14, 15, 9])
-      expect(tx.out[1].parsed_script.get_address).to eq(oa_address_to_address to)
-      expect(tx.out[2].parsed_script.get_address).to eq(oa_address_to_address from[0])
-      expect(tx.out[3].parsed_script.get_address).to eq(oa_address_to_address to)
-      expect(tx.out[4].parsed_script.get_address).to eq(oa_address_to_address from[1])
-      expect(tx.out[5].parsed_script.get_address).to eq(oa_address_to_address change)
+      expect(tx.out[1].script_pubkey.addresses.first).to eq(oa_address_to_address to)
+      expect(tx.out[2].script_pubkey.addresses.first).to eq(oa_address_to_address from[0])
+      expect(tx.out[3].script_pubkey.addresses.first).to eq(oa_address_to_address to)
+      expect(tx.out[4].script_pubkey.addresses.first).to eq(oa_address_to_address from[1])
+      expect(tx.out[5].script_pubkey.addresses.first).to eq(oa_address_to_address change)
     end
 
     it 'send_bitcoin' do
@@ -332,23 +332,23 @@ describe 'OpenAssets::Api use mainnet' do
       expect(tx.inputs.length).to eq(1)
       expect(tx.outputs.length).to eq(3)
       expect(tx.outputs[0].value).to eq(5466)
-      expect(tx.outputs[0].parsed_script.to_string).to eq('OP_DUP OP_HASH160 b7218fe503cd18555255e5b13d4f07f3fd00d0c9 OP_EQUALVERIFY OP_CHECKSIG')
+      expect(tx.outputs[0].script_pubkey.to_s).to eq('OP_DUP OP_HASH160 b7218fe503cd18555255e5b13d4f07f3fd00d0c9 OP_EQUALVERIFY OP_CHECKSIG')
       expect(tx.outputs[1].value).to eq(5466)
-      expect(tx.outputs[1].parsed_script.to_string).to eq('OP_DUP OP_HASH160 b7218fe503cd18555255e5b13d4f07f3fd00d0c9 OP_EQUALVERIFY OP_CHECKSIG')
+      expect(tx.outputs[1].script_pubkey.to_s).to eq('OP_DUP OP_HASH160 b7218fe503cd18555255e5b13d4f07f3fd00d0c9 OP_EQUALVERIFY OP_CHECKSIG')
       expect(tx.outputs[2].value).to eq(5468)
-      expect(tx.outputs[2].parsed_script.to_string).to eq('OP_DUP OP_HASH160 b7218fe503cd18555255e5b13d4f07f3fd00d0c9 OP_EQUALVERIFY OP_CHECKSIG')
+      expect(tx.outputs[2].script_pubkey.to_s).to eq('OP_DUP OP_HASH160 b7218fe503cd18555255e5b13d4f07f3fd00d0c9 OP_EQUALVERIFY OP_CHECKSIG')
 
       tx = subject.send_bitcoin(address, 13000, address, nil, 'unsigned', 3)
       expect(tx.inputs.length).to eq(1)
       expect(tx.outputs.length).to eq(4)
       expect(tx.outputs[0].value).to eq(3400)
-      expect(tx.outputs[0].parsed_script.to_string).to eq('OP_DUP OP_HASH160 b7218fe503cd18555255e5b13d4f07f3fd00d0c9 OP_EQUALVERIFY OP_CHECKSIG')
+      expect(tx.outputs[0].script_pubkey.to_s).to eq('OP_DUP OP_HASH160 b7218fe503cd18555255e5b13d4f07f3fd00d0c9 OP_EQUALVERIFY OP_CHECKSIG')
       expect(tx.outputs[1].value).to eq(4333)
-      expect(tx.outputs[1].parsed_script.to_string).to eq('OP_DUP OP_HASH160 b7218fe503cd18555255e5b13d4f07f3fd00d0c9 OP_EQUALVERIFY OP_CHECKSIG')
+      expect(tx.outputs[1].script_pubkey.to_s).to eq('OP_DUP OP_HASH160 b7218fe503cd18555255e5b13d4f07f3fd00d0c9 OP_EQUALVERIFY OP_CHECKSIG')
       expect(tx.outputs[2].value).to eq(4333)
-      expect(tx.outputs[2].parsed_script.to_string).to eq('OP_DUP OP_HASH160 b7218fe503cd18555255e5b13d4f07f3fd00d0c9 OP_EQUALVERIFY OP_CHECKSIG')
+      expect(tx.outputs[2].script_pubkey.to_s).to eq('OP_DUP OP_HASH160 b7218fe503cd18555255e5b13d4f07f3fd00d0c9 OP_EQUALVERIFY OP_CHECKSIG')
       expect(tx.outputs[3].value).to eq(4334)
-      expect(tx.outputs[3].parsed_script.to_string).to eq('OP_DUP OP_HASH160 b7218fe503cd18555255e5b13d4f07f3fd00d0c9 OP_EQUALVERIFY OP_CHECKSIG')
+      expect(tx.outputs[3].script_pubkey.to_s).to eq('OP_DUP OP_HASH160 b7218fe503cd18555255e5b13d4f07f3fd00d0c9 OP_EQUALVERIFY OP_CHECKSIG')
     end
 
   end
@@ -391,6 +391,13 @@ describe 'OpenAssets::Api use mainnet' do
         api.send(:parse_issuance_p2sh_pointer, '47304402202254f7da7c3fe2bf2a4dd2c3e255aa3ad61415550f648b564aea335f8fcd3d92022062eab5c01a5e33eb726f976ebd3b35d3991f8a45da56d64e1cd3fd5178f8c9a6012102effb2edfcf826d43027feae226143bdac058ad2e87b7cec26f97af2d357ddefa3217753d68747470733a2f2f676f6f2e676c2f626d564575777576a9148911455a265235b2d356a1324af000d4dae0326288ac'.htb)
       }
       it do
+        m = OpenAssets::Protocol::MarkerOutput.new([1], 'u=https://goo.gl/bmVEuw')
+        puts m.build_script
+        s = Bitcoin::Script.new << '753d68747470733a2f2f676f6f2e676c2f626d56457577' << Bitcoin::Opcodes::OP_DROP << Bitcoin::Opcodes::OP_DUP <<
+            Bitcoin::Opcodes::OP_HASH160 << '8911455a265235b2d356a1324af000d4dae03262' << Bitcoin::Opcodes::OP_EQUALVERIFY << Bitcoin::Opcodes::OP_CHECKSIG
+        puts s.to_hex
+        puts Bitcoin::Script.parse_from_payload('17753d68747470733a2f2f676f6f2e676c2f626d564575777576a9148911455a265235b2d356a1324af000d4dae0326288ac'.htb)
+
         expect(subject).to eq('u=https://goo.gl/bmVEuw')
       end
     end

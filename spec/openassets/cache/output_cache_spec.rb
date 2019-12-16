@@ -21,7 +21,7 @@ describe OpenAssets::Cache::OutputCache do
     cached = subject.get(txid, index)
 
     expect(cached.value).to eq(100)
-    expect(cached.script.to_string).to eq('OP_RETURN 4f41010001904e1b753d68747470733a2f2f6370722e736d2f35596753553150672d71')
+    expect(cached.script.to_s).to eq('OP_RETURN 4f41010001904e1b753d68747470733a2f2f6370722e736d2f35596753553150672d71')
     expect(cached.asset_id).to eq('AGHhobo7pVQN5fZWqv3rhdc324ryT7qVTB')
     expect(cached.asset_quantity).to eq(200)
     expect(cached.output_type).to eq(OpenAssets::Protocol::OutputType::ISSUANCE)

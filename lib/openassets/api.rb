@@ -57,10 +57,10 @@ module OpenAssets
     def get_balance(address = nil)
       outputs = get_unspent_outputs(address.nil? ? [] : [oa_address_to_address(address)])
       colored_outputs = outputs.map{|o|o.output}
-      sorted_outputs = colored_outputs.sort_by { |o|o.script.to_string}
-      groups = sorted_outputs.group_by{|o| o.script.to_string}
+      sorted_outputs = colored_outputs.sort_by { |o|o.script.to_s}
+      groups = sorted_outputs.group_by{|o| o.script.to_s}
       result = groups.map{|k, v|
-        btc_address = script_to_address(v[0].script)
+        btc_address = v[0].script.addresses.first
         sorted_script_outputs = v.sort_by{|o|o.asset_id unless o.asset_id}
         group_assets = sorted_script_outputs.group_by{|o|o.asset_id}.select{|k,v| !k.nil?}
         assets = group_assets.map{|asset_id, outputs|
@@ -95,7 +95,7 @@ module OpenAssets
     # 'unsigned' for getting the raw unsigned transaction without broadcasting"""='broadcast'
     # @param[Integer] output_qty The number of divides the issue output. Default value is 1.
     # Ex. amount = 125 and output_qty = 2, asset quantity = [62, 63] and issue TxOut is two.
-    # @return[Bitcoin::Protocol::Tx] The Bitcoin::Protocol::Tx object.
+    # @return[Bitcoin::Tx] The Bitcoin::Tx object.
     def issue_asset(from, amount, metadata = nil, to = nil, fees = nil, mode = 'broadcast', output_qty = 1)
       to = from if to.nil?
       colored_outputs = get_unspent_outputs([oa_address_to_address(from)])
@@ -114,7 +114,7 @@ module OpenAssets
     # @param[String] mode 'broadcast' (default) for signing and broadcasting the transaction,
     # 'signed' for signing the transaction without broadcasting,
     # 'unsigned' for getting the raw unsigned transaction without broadcasting"""='broadcast'
-    # @return[Bitcoin::Protocol:Tx] The resulting transaction.
+    # @return[Bitcoin::Tx] The resulting transaction.
     def send_asset(from, asset_id, amount, to, fees = nil, mode = 'broadcast', output_qty = 1)
       colored_outputs = get_unspent_outputs([oa_address_to_address(from)])
       asset_transfer_spec = OpenAssets::Transaction::TransferParameters.new(colored_outputs, to, from, amount, output_qty)
@@ -131,7 +131,7 @@ module OpenAssets
     # @param[String] mode 'broadcast' (default) for signing and broadcasting the transaction,
     # 'signed' for signing the transaction without broadcasting,
     # 'unsigned' for getting the raw unsigned transaction without broadcasting"""='broadcast'
-    # @return[Bitcoin::Protocol:Tx] The resulting transaction.
+    # @return[Bitcoin::Tx] The resulting transaction.
     def send_assets(from, send_asset_params, fees = nil, mode = 'broadcast')
       transfer_specs = send_asset_params.map{ |param|
         colored_outputs = get_unspent_outputs([oa_address_to_address(param.from || from)])
@@ -154,7 +154,7 @@ module OpenAssets
     # 'unsigned' for getting the raw unsigned transaction without broadcasting"""='broadcast'
     # @param [Integer] output_qty The number of divides the issue output. Default value is 1.
     # Ex. amount = 125 and output_qty = 2, asset quantity = [62, 63] and issue TxOut is two.
-    # @return[Bitcoin::Protocol:Tx] The resulting transaction.
+    # @return[Bitcoin::Tx] The resulting transaction.
     def send_bitcoin(from, amount, to, fees = nil, mode = 'broadcast', output_qty = 1)
       validate_address([from, to])
       colored_outputs = get_unspent_outputs([from])
@@ -170,7 +170,7 @@ module OpenAssets
     # @param[String] mode 'broadcast' (default) for signing and broadcasting the transaction,
     # 'signed' for signing the transaction without broadcasting,
     # 'unsigned' for getting the raw unsigned transaction without broadcasting"""='broadcast'
-    # @return[Bitcoin::Protocol:Tx] The resulting transaction.
+    # @return[Bitcoin::Tx] The resulting transaction.
     def send_bitcoins(from, send_params, fees = nil, mode = 'broadcast')
       colored_outputs = get_unspent_outputs([from])
       btc_transfer_specs = send_params.map{|param|
@@ -200,8 +200,8 @@ module OpenAssets
     # @return [Array[OpenAssets::Transaction::SpendableOutput]] The array of unspent outputs.
     def get_unspent_outputs(addresses)
       validate_address(addresses)
-      unspent = provider.list_unspent(addresses, @config[:min_confirmation], @config[:max_confirmation])
-      result = unspent.map{|item|
+      unspents = provider.list_unspent(addresses, @config[:min_confirmation], @config[:max_confirmation])
+      result = unspents.map{|item|
         output_result = get_output(item['txid'], item['vout'])
         output_result.account = item['account']
         output = OpenAssets::Transaction::SpendableOutput.new(
@@ -214,31 +214,39 @@ module OpenAssets
       result
     end
 
-    def get_output(txid, output_index)
+    # get output
+    # @param [String] txid txid of output.
+    # @param [Integer] index index of output.
+    # @return
+    def get_output(txid, index)
       if output_cache
-        cached = output_cache.get(txid, output_index)
+        cached = output_cache.get(txid, index)
         return cached unless cached.nil?
       end
       decode_tx = load_cached_tx(txid)
-      tx = Bitcoin::Protocol::Tx.new(decode_tx.htb)
+      tx = Bitcoin::Tx.parse_from_payload(decode_tx.htb)
       colored_outputs = get_color_outputs_from_tx(tx)
       colored_outputs.each_with_index { |o, index| output_cache.put(txid, index, o)} if output_cache
-      colored_outputs[output_index]
+      colored_outputs[index]
     end
 
+    # get coloring outputs from tx.
+    # @param [Bitcoin::Tx] tx regular transaction.
+    # @return [Array[OpenAssets::Protocol::TransactionOutput]] array of coloring output.
     def get_color_outputs_from_tx(tx)
-      unless tx.coinbase?
+      unless tx.coinbase_tx?
         tx.outputs.each_with_index { |out, i|
-          marker_output_payload = OpenAssets::Protocol::MarkerOutput.parse_script(out.pk_script)
+          # check marker output.
+          marker_output_payload = OpenAssets::Protocol::MarkerOutput.parse_script(out.script_pubkey)
           unless marker_output_payload.nil?
             marker_output = OpenAssets::Protocol::MarkerOutput.deserialize_payload(marker_output_payload)
-            prev_outs = tx.inputs.map {|input|get_output(input.previous_output, input.prev_out_index)}
+            prev_outs = tx.inputs.map {|input|get_output(input.out_point.txid, input.out_point.index)}
             asset_ids = compute_asset_ids(prev_outs, i, tx, marker_output.asset_quantities)
             return asset_ids unless asset_ids.nil?
           end
         }
       end
-      tx.outputs.map{|out| OpenAssets::Protocol::TransactionOutput.new(out.value, out.parsed_script, nil, 0, OpenAssets::Protocol::OutputType::UNCOLORED)}
+      tx.outputs.map{|out| OpenAssets::Protocol::TransactionOutput.new(out.value, out.script_pubkey, nil, 0, OpenAssets::Protocol::OutputType::UNCOLORED)}
     end
 
     # Get tx outputs.
@@ -248,21 +256,21 @@ module OpenAssets
     def get_outputs_from_txid(txid, use_cache = false)
       tx = get_tx(txid, use_cache)
       outputs = get_color_outputs_from_tx(tx)
-      outputs.map.with_index{|out, i|out.to_hash.merge({'txid' => tx.hash, 'vout' => i})}
+      outputs.map.with_index{|out, i|out.to_hash.merge({'txid' => txid, 'vout' => i})}
     end
 
-    # Get tx. (This method returns plain Bitcoin::Protocol::Tx object, so it not contains open asset information.)
+    # Get tx. (This method returns plain Bitcoin::Tx object, so it not contains open asset information.)
     # @param[String] txid Transaction ID.
-    # @return[Bitcoin::Protocol::Tx] Return the Bitcoin::Protocol::Tx.
+    # @return[Bitcoin::Tx] Return the Bitcoin::Tx.
     def get_tx(txid, use_cache = true)
       decode_tx = use_cache ? load_cached_tx(txid) : load_tx(txid)
-      Bitcoin::Protocol::Tx.new(decode_tx.htb)
+      Bitcoin::Tx.parse_from_payload(decode_tx.htb)
     end
 
     private
     # @param [Array[OpenAssets::Protocol::TransactionOutput] prev_outs The outputs referenced by the inputs of the transaction.
     # @param [Integer] marker_output_index The position of the marker output in the transaction.
-    # @param [Bitcoin::Protocol::Tx] tx The transaction.
+    # @param [Bitcoin::Tx] tx The transaction.
     # @param [Array[OpenAssets::Protocol::TransactionOutput]] asset_quantities The list of asset quantities of the outputs.
     def compute_asset_ids(prev_outs, marker_output_index, tx, asset_quantities)
       outputs = tx.outputs
@@ -276,12 +284,12 @@ module OpenAssets
 
       for i in (0..marker_output_index-1)
         value = outputs[i].value
-        script = outputs[i].parsed_script
+        script = outputs[i].script_pubkey
         if i < asset_quantities.length && asset_quantities[i] > 0
-          payload = OpenAssets::Protocol::MarkerOutput.parse_script(marker_output.parsed_script.to_payload)
+          payload = OpenAssets::Protocol::MarkerOutput.parse_script(marker_output.script_pubkey)
           metadata = OpenAssets::Protocol::MarkerOutput.deserialize_payload(payload).metadata
-          if (metadata.nil? || metadata.length == 0) && prev_outs[0].script.is_p2sh?
-            metadata = parse_issuance_p2sh_pointer(tx.in[0].script_sig)
+          if (metadata.nil? || metadata.length == 0) && prev_outs[0].script.p2sh?
+            metadata = parse_issuance_p2sh_pointer(tx.in[0].script_sig.to_payload)
           end
           metadata = '' unless metadata
           output = OpenAssets::Protocol::TransactionOutput.new(value, script, issuance_asset_id, asset_quantities[i], OpenAssets::Protocol::OutputType::ISSUANCE, metadata)
@@ -292,16 +300,16 @@ module OpenAssets
       end
 
       # Add the marker output
-      result << OpenAssets::Protocol::TransactionOutput.new(marker_output.value, marker_output.parsed_script, nil, 0, OpenAssets::Protocol::OutputType::MARKER_OUTPUT)
+      result << OpenAssets::Protocol::TransactionOutput.new(marker_output.value, marker_output.script_pubkey, nil, 0, OpenAssets::Protocol::OutputType::MARKER_OUTPUT)
 
       # remove invalid marker
       remove_outputs = []
       for i in (marker_output_index + 1)..(outputs.length-1)
-        marker_output_payload = OpenAssets::Protocol::MarkerOutput.parse_script(outputs[i].pk_script)
+        marker_output_payload = OpenAssets::Protocol::MarkerOutput.parse_script(outputs[i].script_pubkey)
         unless marker_output_payload.nil?
           remove_outputs << outputs[i]
           result << OpenAssets::Protocol::TransactionOutput.new(
-              outputs[i].value, outputs[i].parsed_script, nil, 0, OpenAssets::Protocol::OutputType::MARKER_OUTPUT)
+              outputs[i].value, outputs[i].script_pubkey, nil, 0, OpenAssets::Protocol::OutputType::MARKER_OUTPUT)
           next
         end
       end
@@ -338,7 +346,7 @@ module OpenAssets
             end
           end
         end
-        result << OpenAssets::Protocol::TransactionOutput.new(outputs[i].value, outputs[i].parsed_script,
+        result << OpenAssets::Protocol::TransactionOutput.new(outputs[i].value, outputs[i].script_pubkey,
                                                               asset_id, output_asset_quantity, OpenAssets::Protocol::OutputType::TRANSFER, metadata)
       end
       result
@@ -360,15 +368,15 @@ module OpenAssets
     def change_network
       case @config[:network]
         when 'testnet'
-          Bitcoin.network = :testnet3
+          Bitcoin.chain_params = :testnet
         when 'regtest'
-          Bitcoin.network = :regtest
+          Bitcoin.chain_params = :regtest
         when 'litecoin'
-          Bitcoin.network = :litecoin
+          Bitcoin.chain_params = :litecoin
         when 'litecoin_testnet'
-          Bitcoin.network = :litecoin_testnet
+          Bitcoin.chain_params = :litecoin_testnet
         else
-          Bitcoin.network = :bitcoin
+          Bitcoin.chain_params = :mainnet
       end
     end
 
@@ -406,11 +414,14 @@ module OpenAssets
     end
 
     # parse issuance p2sh which contains asset definition pointer
+    # @param [String] script_sig script_sig with binary format.
+    # @return [String] Return asset definition pointer string i f +script_sig+ has asset definition pointer, otherwise nil
     def parse_issuance_p2sh_pointer(script_sig)
-      script = Bitcoin::Script.new(script_sig).chunks.last
-      redeem_script = Bitcoin::Script.new(script)
-      return nil unless redeem_script.chunks[1] == Bitcoin::Script::OP_DROP
-      asset_def = to_bytes(redeem_script.chunks[0].to_s.bth)[0..-1].map{|x|x.to_i(16).chr}.join
+      script = Bitcoin::Script.parse_from_payload(script_sig).chunks.last.pushed_data
+      redeem_script = Bitcoin::Script.parse_from_payload(script)
+      return nil unless redeem_script.chunks[1].ord == Bitcoin::Opcodes::OP_DROP
+      return nil unless redeem_script.chunks[0].pushdata?
+      asset_def = to_bytes(redeem_script.chunks[0].pushed_data.bth)[0..-1].map{|x|x.to_i(16).chr}.join
       asset_def && asset_def.start_with?('u=') ? asset_def : nil
     end
 

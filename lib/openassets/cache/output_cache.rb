@@ -36,7 +36,7 @@ module OpenAssets
       # @param[OpenAssets::Protocol::TransactionOutput] output The output to save.
       def put(txid, index, output)
         db.execute('INSERT INTO Output (TransactionHash, OutputIndex, Value,Script,AssetId,AssetQuantity,OutputType,Metadata) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-                   [txid, index, output.value, output.script.to_string, output.asset_id, output.asset_quantity, output.output_type, output.metadata])
+                   [txid, index, output.value, output.script.to_s, output.asset_id, output.asset_quantity, output.output_type, output.metadata])
       end
     end
   end
