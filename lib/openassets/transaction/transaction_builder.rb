@@ -31,10 +31,7 @@ module OpenAssets
             TransactionBuilder.collect_uncolored_outputs(issue_spec.unspent_outputs, 2 * @amount + fees)
         tx = Bitcoin::Tx.new
         inputs.each { |spendable|
-          script_sig = spendable.output.script.to_payload
-          tx_in = Bitcoin::TxIn.new(out_point: Bitcoin::OutPoint.new(spendable.out_point.hash, spendable.out_point.index))
-          tx_in.script_sig = script_sig
-          tx.in << tx_in
+          tx.in << Bitcoin::TxIn.new(out_point: Bitcoin::OutPoint.new(spendable.out_point.hash, spendable.out_point.index), script_sig: spendable.output.script)
         }
         issue_address = oa_address_to_address(issue_spec.to_script)
         from_address = oa_address_to_address(issue_spec.change_script)
