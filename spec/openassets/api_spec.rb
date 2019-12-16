@@ -92,7 +92,7 @@ describe 'OpenAssets::Api use mainnet' do
       expect(tx.version).to eq(1)
       expect(tx.lock_time).to eq(0)
       expect(tx.inputs.length).to eq(1)
-      expect(tx.inputs[0].out_point.tx_hash).to eq('21b093ec41244898a50e1f97cb80fd98d7714c7235e0a4a30d7d0c6fb6a6ce8a')
+      expect(tx.inputs[0].out_point.txid).to eq('21b093ec41244898a50e1f97cb80fd98d7714c7235e0a4a30d7d0c6fb6a6ce8a')
       expect(tx.inputs[0].out_point.index).to eq(1)
       expect(tx.outputs.length).to eq(4)
       # issue output
@@ -232,12 +232,12 @@ describe 'OpenAssets::Api use mainnet' do
       expect(tx.lock_time).to eq(0)
       expect(tx.inputs.length).to eq(3)
       expect(tx.inputs[0].out_point.index).to eq(2)
-      expect(tx.inputs[0].out_point.tx_hash).to eq('97f5fdfe133005c033ea3185202c53bb59d0760e9f9dd2cc2f8c50bbce8ec8bb')
+      expect(tx.inputs[0].out_point.txid).to eq('97f5fdfe133005c033ea3185202c53bb59d0760e9f9dd2cc2f8c50bbce8ec8bb')
       expect(tx.inputs[1].out_point.index).to eq(2)
-      expect(tx.inputs[1].out_point.tx_hash).to eq('9da5541e6653b03437264ab249170dccee24cdfe6351826df2f4b63079df2d4d')
+      expect(tx.inputs[1].out_point.txid).to eq('9da5541e6653b03437264ab249170dccee24cdfe6351826df2f4b63079df2d4d')
       # ↑の２つのUTXOはアセット転送のアウトプットで、Bitcoinが不足してるので↓のトランザクションも追加
       expect(tx.inputs[2].out_point.index).to eq(2)
-      expect(tx.inputs[2].out_point.tx_hash).to eq('92ecb6c38bfefc3b6ff8b48a2dd14ece823d37c02adbeeeeede5a801e4926ece')
+      expect(tx.inputs[2].out_point.txid).to eq('92ecb6c38bfefc3b6ff8b48a2dd14ece823d37c02adbeeeeede5a801e4926ece')
 
       expect(tx.outputs.length).to eq(4)
       # marker output

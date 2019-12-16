@@ -205,7 +205,7 @@ module OpenAssets
         output_result = get_output(item['txid'], item['vout'])
         output_result.account = item['account']
         output = OpenAssets::Transaction::SpendableOutput.new(
-          OpenAssets::Transaction::OutPoint.new(item['txid'], item['vout']), output_result)
+            Bitcoin::OutPoint.new(item['txid'].rhex, item['vout']), output_result)
         output.confirmations = item['confirmations']
         output.spendable = item['spendable']
         output.solvable = item['solvable']

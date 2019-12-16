@@ -13,7 +13,8 @@ module OpenAssets
       attr_accessor :spendable
       attr_accessor :solvable
 
-      # @param [OpenAssets::Transaction::OutPoint] out_point
+      # initialize
+      # @param [Bitcoin::OutPoint] out_point
       # @param [OpenAssets::Protocol::TransactionOutput] output
       def initialize(out_point, output)
         @out_point = out_point
@@ -26,7 +27,7 @@ module OpenAssets
       # convert to hash.
       def to_hash
         return {} if @output.nil?
-        h = {'txid' => @out_point.hash, 'vout' => @out_point.index, 'confirmations' => @confirmations}.merge(@output.to_hash)
+        h = {'txid' => @out_point.txid, 'vout' => @out_point.index, 'confirmations' => @confirmations}.merge(@output.to_hash)
         h['solvable'] = @solvable unless @solvable.nil?
         h['spendable'] = @spendable unless @spendable.nil?
         h

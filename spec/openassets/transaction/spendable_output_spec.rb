@@ -11,7 +11,7 @@ describe OpenAssets::Transaction::SpendableOutput, :network => :testnet do
         600, transfer_spec.outputs[2].script_pubkey, 'oK31ByjFuNhfnFuRMmZgchsdiprYmRzuz5', 9900, OpenAssets::Protocol::OutputType::TRANSFER, metadata)
     output.account = ''
     result = OpenAssets::Transaction::SpendableOutput.new(
-        OpenAssets::Transaction::OutPoint.new('2ef6aaf051229ff755a137a51466b54da6d8c87d17130bca8a879e9e64172ebd', 2), output)
+        Bitcoin::OutPoint.new('2ef6aaf051229ff755a137a51466b54da6d8c87d17130bca8a879e9e64172ebd'.rhex, 2), output)
     result.confirmations = 20842
     expect(result.to_hash).to match(
                                   'txid' => '2ef6aaf051229ff755a137a51466b54da6d8c87d17130bca8a879e9e64172ebd',

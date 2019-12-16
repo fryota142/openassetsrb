@@ -222,13 +222,13 @@ describe 'OpenAssets::Api use testnet', :network => :testnet do
         }
         it do
           expect(subject.inputs.length).to eq(4)
-          expect(subject.inputs[0].out_point.tx_hash).to eq('6887dd16b7ad2847bd4546211665199e05711c3acd1a67da879506adb5486910')
+          expect(subject.inputs[0].out_point.txid).to eq('6887dd16b7ad2847bd4546211665199e05711c3acd1a67da879506adb5486910')
           expect(subject.inputs[0].out_point.index).to eq(1)
-          expect(subject.inputs[1].out_point.tx_hash).to eq('6887dd16b7ad2847bd4546211665199e05711c3acd1a67da879506adb5486910')
+          expect(subject.inputs[1].out_point.txid).to eq('6887dd16b7ad2847bd4546211665199e05711c3acd1a67da879506adb5486910')
           expect(subject.inputs[1].out_point.index).to eq(2)
-          expect(subject.inputs[2].out_point.tx_hash).to eq('6887dd16b7ad2847bd4546211665199e05711c3acd1a67da879506adb5486910')
+          expect(subject.inputs[2].out_point.txid).to eq('6887dd16b7ad2847bd4546211665199e05711c3acd1a67da879506adb5486910')
           expect(subject.inputs[2].out_point.index).to eq(3)
-          expect(subject.inputs[3].out_point.tx_hash).to eq('308ea73b45bef1428acb41f996543d6ebd534dca8f5de965e7f00eae084aaa5c')
+          expect(subject.inputs[3].out_point.txid).to eq('308ea73b45bef1428acb41f996543d6ebd534dca8f5de965e7f00eae084aaa5c')
           expect(subject.inputs[3].out_point.index).to eq(1)
 
           expect(subject.outputs.length).to eq(1)
