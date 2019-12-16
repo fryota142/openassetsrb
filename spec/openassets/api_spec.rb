@@ -101,8 +101,8 @@ describe 'OpenAssets::Api use mainnet' do
       expect(tx.outputs[1].value).to eq(600)
       expect(tx.outputs[1].script_pubkey.to_s).to eq('OP_DUP OP_HASH160 24b3d405bc60bd9628691fe28bb00f6800e14806 OP_EQUALVERIFY OP_CHECKSIG')
       # marker output
-      marker_output_payload = OpenAssets::Protocol::MarkerOutput.parse_script(tx.outputs[2].script_pubkey)
-      marker_output = OpenAssets::Protocol::MarkerOutput.deserialize_payload(marker_output_payload)
+      marker_output_hex = OpenAssets::Protocol::MarkerOutput.parse_script(tx.outputs[2].script_pubkey)
+      marker_output = OpenAssets::Protocol::MarkerOutput.parse_from_payload(marker_output_hex.htb)
       expect(tx.outputs[2].value).to eq(0)
       expect(marker_output.asset_quantities).to eq([62, 63])
       expect(marker_output.metadata).to eq('u=https://goo.gl/bmVEuw')
@@ -116,8 +116,8 @@ describe 'OpenAssets::Api use mainnet' do
       tx = subject.issue_asset(address, 125, nil, address, nil, 'unsigned')
       expect(tx.inputs.length).to eq(1)
       expect(tx.outputs.length).to eq(3)
-      marker_output_payload = OpenAssets::Protocol::MarkerOutput.parse_script(tx.outputs[1].script_pubkey)
-      marker_output = OpenAssets::Protocol::MarkerOutput.deserialize_payload(marker_output_payload)
+      marker_output_hex = OpenAssets::Protocol::MarkerOutput.parse_script(tx.outputs[1].script_pubkey)
+      marker_output = OpenAssets::Protocol::MarkerOutput.parse_from_payload(marker_output_hex.htb)
       expect(tx.outputs[1].value).to eq(0)
       expect(marker_output.asset_quantities).to eq([125])
       expect(marker_output.metadata).to eq('')
@@ -241,8 +241,8 @@ describe 'OpenAssets::Api use mainnet' do
 
       expect(tx.outputs.length).to eq(4)
       # marker output
-      marker_output_payload = OpenAssets::Protocol::MarkerOutput.parse_script(tx.outputs[0].script_pubkey)
-      marker_output = OpenAssets::Protocol::MarkerOutput.deserialize_payload(marker_output_payload)
+      marker_output_hex = OpenAssets::Protocol::MarkerOutput.parse_script(tx.outputs[0].script_pubkey)
+      marker_output = OpenAssets::Protocol::MarkerOutput.parse_from_payload(marker_output_hex.htb)
       expect(tx.outputs[0].value).to eq(0)
       expect(marker_output.asset_quantities).to eq([10, 14])
       # asset transfer
@@ -257,8 +257,8 @@ describe 'OpenAssets::Api use mainnet' do
       # split output_qty
       tx = subject.send_asset(from, asset_id, 10, to, 10000, 'unsigned', 3)
       expect(tx.outputs.length).to eq(6)
-      marker_output_payload = OpenAssets::Protocol::MarkerOutput.parse_script(tx.outputs[0].script_pubkey)
-      marker_output = OpenAssets::Protocol::MarkerOutput.deserialize_payload(marker_output_payload)
+      marker_output_hex = OpenAssets::Protocol::MarkerOutput.parse_script(tx.outputs[0].script_pubkey)
+      marker_output = OpenAssets::Protocol::MarkerOutput.parse_from_payload(marker_output_hex.htb)
       expect(tx.outputs[0].value).to eq(0)
       expect(marker_output.asset_quantities).to eq([3, 3, 4, 14])
       expect(tx.outputs[1].value).to eq(600)
@@ -287,8 +287,8 @@ describe 'OpenAssets::Api use mainnet' do
 
       expect(tx.version).to eq(1)
       expect(tx.lock_time).to eq(0)
-      marker_output_payload = OpenAssets::Protocol::MarkerOutput.parse_script(tx.outputs[0].script_pubkey)
-      marker_output = OpenAssets::Protocol::MarkerOutput.deserialize_payload(marker_output_payload)
+      marker_output_hex = OpenAssets::Protocol::MarkerOutput.parse_script(tx.outputs[0].script_pubkey)
+      marker_output = OpenAssets::Protocol::MarkerOutput.parse_from_payload(marker_output_hex.htb)
       expect(tx.outputs.length).to eq(5)
       expect(marker_output.asset_quantities).to eq([10, 10, 4])
       expect(tx.out[1].script_pubkey.addresses.first).to eq(oa_address_to_address to[0])
@@ -308,8 +308,8 @@ describe 'OpenAssets::Api use mainnet' do
 
       expect(tx.version).to eq(1)
       expect(tx.lock_time).to eq(0)
-      marker_output_payload = OpenAssets::Protocol::MarkerOutput.parse_script(tx.outputs[0].script_pubkey)
-      marker_output = OpenAssets::Protocol::MarkerOutput.deserialize_payload(marker_output_payload)
+      marker_output_hex = OpenAssets::Protocol::MarkerOutput.parse_script(tx.outputs[0].script_pubkey)
+      marker_output = OpenAssets::Protocol::MarkerOutput.parse_from_payload(marker_output_hex.htb)
       expect(tx.outputs.length).to eq(6)
       expect(marker_output.asset_quantities).to eq([10, 14, 15, 9])
       expect(tx.out[1].script_pubkey.addresses.first).to eq(oa_address_to_address to)

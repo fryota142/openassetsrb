@@ -73,17 +73,13 @@ module OpenAssets
 
       def address
         return @script.addresses.first if @script.p2pkh? || @script.p2sh? || @script.p2wpkh? || @script.p2wsh?
-        nil
+        nil # TODO Bitcoin::Script#to_addr after it enable
       end
 
       def oa_address
         a = address
         return nil if a.nil?
-        if a.is_a?(Array)
-          a.map{|btc_address| address_to_oa_address(btc_address)}
-        else
-          address_to_oa_address(a)
-        end
+        address_to_oa_address(a)
       end
 
       # get pubkey script type

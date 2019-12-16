@@ -30,8 +30,8 @@ describe OpenAssets::Transaction::TransactionBuilder do
     expect(out0.script_pubkey.to_s).to eq('OP_DUP OP_HASH160 17797f19075a56e7d4fc23f2ea5c17020fd3b93d OP_EQUALVERIFY OP_CHECKSIG')
     # Marker output
     out1 = result.out[1]
-    payload = OpenAssets::Protocol::MarkerOutput.parse_script(out1.script_pubkey)
-    marker_output = OpenAssets::Protocol::MarkerOutput.deserialize_payload(payload)
+    hex = OpenAssets::Protocol::MarkerOutput.parse_script(out1.script_pubkey)
+    marker_output = OpenAssets::Protocol::MarkerOutput.parse_from_payload(hex.htb)
     expect(out1.value).to eq(0)
     expect(marker_output.asset_quantities).to eq([1000])
     expect(marker_output.metadata).to eq('metadata')
@@ -138,8 +138,8 @@ describe OpenAssets::Transaction::TransactionBuilder do
     tx = builder.transfer_asset(to, spec, from, 10000)
     expect(tx.in.length).to eq(4)
     expect(tx.out.length).to eq(5)
-    payload = OpenAssets::Protocol::MarkerOutput.parse_script(tx.out[0].script_pubkey)
-    marker_output = OpenAssets::Protocol::MarkerOutput.deserialize_payload(payload)
+    hex = OpenAssets::Protocol::MarkerOutput.parse_script(tx.out[0].script_pubkey)
+    marker_output = OpenAssets::Protocol::MarkerOutput.parse_from_payload(hex.htb)
     expect(marker_output.asset_quantities).to eq([33, 33, 34])
     expect(tx.out[1].value).to eq(600)
     expect(tx.out[2].value).to eq(600)
@@ -165,8 +165,8 @@ describe OpenAssets::Transaction::TransactionBuilder do
     btc_transfer_specs = [OpenAssets::Transaction::TransferParameters.new(unspent_outputs_3, nil, change, 0)]
     tx = builder.send(:transfer, asset_transfer_specs, btc_transfer_specs, 0)
 
-    payload = OpenAssets::Protocol::MarkerOutput.parse_script(tx.out[0].script_pubkey)
-    marker_output = OpenAssets::Protocol::MarkerOutput.deserialize_payload(payload)
+    hex = OpenAssets::Protocol::MarkerOutput.parse_script(tx.out[0].script_pubkey)
+    marker_output = OpenAssets::Protocol::MarkerOutput.parse_from_payload(hex.htb)
     expect(marker_output.asset_quantities).to eq([100,400,100,400])
     expect(tx.out[1].script_pubkey.addresses.first).to eq(to)
     expect(tx.out[2].script_pubkey.addresses.first).to eq(from[0])

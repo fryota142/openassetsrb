@@ -138,8 +138,8 @@ describe 'OpenAssets::Api use testnet', :network => :testnet do
           expect(tx.inputs.length).to eq(6)
           expect(tx.outputs.length).to eq(6)
           # marker output
-          marker_output_payload = OpenAssets::Protocol::MarkerOutput.parse_script(tx.outputs[0].script_pubkey)
-          marker_output = OpenAssets::Protocol::MarkerOutput.deserialize_payload(marker_output_payload)
+          marker_output_hex = OpenAssets::Protocol::MarkerOutput.parse_script(tx.outputs[0].script_pubkey)
+          marker_output = OpenAssets::Protocol::MarkerOutput.parse_from_payload(marker_output_hex.htb)
           expect(tx.outputs[0].value).to eq(0)
           expect(marker_output.asset_quantities).to eq([50, 22, 4, 2])
           # output for oGu4VXx2TU97d9LmPP8PMCkHckkcPqC5RY
@@ -167,8 +167,8 @@ describe 'OpenAssets::Api use testnet', :network => :testnet do
           expect(tx.inputs.length).to eq(6)
           expect(tx.outputs.length).to eq(7)
           # marker output
-          marker_output_payload = OpenAssets::Protocol::MarkerOutput.parse_script(tx.outputs[0].script_pubkey)
-          marker_output = OpenAssets::Protocol::MarkerOutput.deserialize_payload(marker_output_payload)
+          marker_output_hex = OpenAssets::Protocol::MarkerOutput.parse_script(tx.outputs[0].script_pubkey)
+          marker_output = OpenAssets::Protocol::MarkerOutput.parse_from_payload(marker_output_hex.htb)
           expect(tx.outputs[0].value).to eq(0)
           expect(marker_output.asset_quantities).to eq([30, 20, 22, 4, 2])
           # output for oGu4VXx2TU97d9LmPP8PMCkHckkcPqC5RY

@@ -16,7 +16,7 @@ module OpenAssets
       attr_accessor :asset_quantities
       attr_accessor :metadata
 
-      # @param [Array] asset_quantities The asset quantity array
+      # @param [Array[Integer]] asset_quantities The asset quantity array
       # @param [String] metadata The metadata in the marker output.
       def initialize(asset_quantities, metadata = '')
         @asset_quantities = asset_quantities
@@ -24,8 +24,8 @@ module OpenAssets
       end
 
       # Serialize the marker output into a Open Assets Payload buffer.
-      # @return [String] The serialized payload.
-      def to_payload
+      # @return [String] The serialized payload with hex format
+      def to_hex
         payload = [OAP_MARKER, VERSION]
         asset_quantity_count = Bitcoin.pack_var_int(@asset_quantities.length).unpack("H*")
         payload << sort_count(asset_quantity_count[0])
@@ -37,23 +37,30 @@ module OpenAssets
         payload.join
       end
 
+      # Serialize the marker output into a Open Assets Payload buffer.
+      # @return [String] The serialized payload with binary format.
+      def to_payload
+        to_hex.htb
+      end
+
       # Deserialize the marker output payload.
-      # @param [String] payload The Open Assets Payload with hex format.
+      # @param [String] payload The Open Assets Payload with binary format.
       # @return [OpenAssets::Protocol::MarkerOutput] The marker output object.
-      def self.deserialize_payload(payload)
-        return nil unless valid?(payload)
-        payload = payload[8..-1] # exclude OAP_MARKER,VERSION
-        asset_quantity, payload = parse_asset_qty(payload)
-        list = to_bytes(payload).map{|x|(x.to_i(16)>=128 ? x : x+"|")}.join.split('|')[0..(asset_quantity - 1)].join
+      def self.parse_from_payload(payload)
+        p = payload.bth
+        return nil unless valid?(p)
+        p = p[8..-1] # exclude OAP_MARKER,VERSION
+        asset_quantity, p = parse_asset_qty(p)
+        list = to_bytes(p).map{|x|(x.to_i(16)>=128 ? x : x+"|")}.join.split('|')[0..(asset_quantity - 1)].join
         asset_quantities = decode_leb128(list)
-        meta = to_bytes(payload[list.size..-1])
+        meta = to_bytes(p[list.size..-1])
         metadata =  meta.empty? ? '' : meta[1..-1].map{|x|x.to_i(16).chr}.join
         new(asset_quantities, metadata)
       end
 
       # Parses an output and returns the payload if the output matches the right pattern for a marker output,
       # @param [Bitcoin::Script] output_script: The output script to be parsed.
-      # @return [String] The arker output payload with hex format if the output fits the pattern, nil otherwise.
+      # @return [String] The marker output payload with hex format if the output fits the pattern, nil otherwise.
       def self.parse_script(output_script)
         data = output_script.op_return_data
         return data.bth if data && valid?(data.bth)
@@ -62,8 +69,9 @@ module OpenAssets
       # Creates an output script containing an OP_RETURN and a PUSHDATA from payload.
       # @return [Bitcoin::Script] the output script.
       def build_script
-        Bitcoin::Script.from_string("OP_RETURN #{to_payload}")
+        Bitcoin::Script.from_string("OP_RETURN #{to_hex}")
       end
+      alias_method :to_script, :build_script
 
       private
       def self.parse_asset_qty(payload)

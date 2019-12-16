@@ -237,9 +237,9 @@ module OpenAssets
       unless tx.coinbase_tx?
         tx.outputs.each_with_index { |out, i|
           # check marker output.
-          marker_output_payload = OpenAssets::Protocol::MarkerOutput.parse_script(out.script_pubkey)
-          unless marker_output_payload.nil?
-            marker_output = OpenAssets::Protocol::MarkerOutput.deserialize_payload(marker_output_payload)
+          marker_output_hex = OpenAssets::Protocol::MarkerOutput.parse_script(out.script_pubkey)
+          unless marker_output_hex.nil?
+            marker_output = OpenAssets::Protocol::MarkerOutput.parse_from_payload(marker_output_hex.htb)
             prev_outs = tx.inputs.map {|input|get_output(input.out_point.txid, input.out_point.index)}
             asset_ids = compute_asset_ids(prev_outs, i, tx, marker_output.asset_quantities)
             return asset_ids unless asset_ids.nil?
@@ -286,8 +286,8 @@ module OpenAssets
         value = outputs[i].value
         script = outputs[i].script_pubkey
         if i < asset_quantities.length && asset_quantities[i] > 0
-          payload = OpenAssets::Protocol::MarkerOutput.parse_script(marker_output.script_pubkey)
-          metadata = OpenAssets::Protocol::MarkerOutput.deserialize_payload(payload).metadata
+          hex = OpenAssets::Protocol::MarkerOutput.parse_script(marker_output.script_pubkey)
+          metadata = OpenAssets::Protocol::MarkerOutput.parse_from_payload(hex.htb).metadata
           if (metadata.nil? || metadata.length == 0) && prev_outs[0].script.p2sh?
             metadata = parse_issuance_p2sh_pointer(tx.in[0].script_sig.to_payload)
           end
