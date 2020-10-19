@@ -22,7 +22,8 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency "ffi", "~>1.9.8"
   spec.add_runtime_dependency "rest-client", "2.0.2"
   spec.add_runtime_dependency "httpclient"
-  spec.add_runtime_dependency "sqlite3"
+  spec.add_runtime_dependency "activerecord"
+  spec.add_runtime_dependency "activerecord-jdbcsqlite3-adapter"
   spec.add_runtime_dependency "leb128", '~> 1.0.0'
   spec.add_development_dependency "bundler"
   spec.add_development_dependency "rake", ">= 12.3.3"
